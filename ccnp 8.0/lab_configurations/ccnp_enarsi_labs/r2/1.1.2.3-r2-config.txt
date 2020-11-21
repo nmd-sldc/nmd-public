@@ -1,0 +1,44 @@
+
+hostname R2
+banner motd # This is R2, Trouble Ticket 1.1.2.3 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+ipv6 unicast-routing
+ip dhcp excluded-address 10.10.10.1 10.10.10.100
+ip dhcp pool LAN4_10
+ network 10.10.10.0 255.255.255.0
+ default-router 10.10.10.1
+ domain-name ccnp4lab.com
+ dns-server 10.10.20.1
+ exit
+ipv6 dhcp pool LAN6_A
+ dns-server 2001:db8:a:b::1
+ domain-name ccnp6lab.om
+ exit
+interface g0/0/0
+ip address 10.10.20.254 255.255.255.0
+ipv6 address fe80::2:1 link-local
+ipv6 address 2001:db8:a:b::2/64
+ipv6 dhcp server LAN6_A
+no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 10.10.20.1
+ipv6 route ::/0 2001:db8:a:b::1
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

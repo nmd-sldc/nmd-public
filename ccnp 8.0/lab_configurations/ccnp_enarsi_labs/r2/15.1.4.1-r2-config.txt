@@ -1,0 +1,36 @@
+
+hostname R2
+no ip domain lookup
+line con 0
+ logging sync
+ exec-time 0 0
+exit
+banner motd # This is R2, Trouble Ticket 15.1.4.1  #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+interface G0/0/0
+ description Connection to R1
+ ip add 172.16.0.1 255.255.255.252
+ no shut
+exit
+interface GigabitEthernet0/0/1
+ description Connection to R3
+ ip address 172.16.1.1 255.255.255.252
+ no shut
+exit
+router ospf 123
+ router-id 2.2.2.1
+ auto-cost reference-bandwidth 1000
+ network 172.16.0.0 0.0.0.3 area 0
+ network 172.16.1.0 0.0.0.3 area 0
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+clear ip ospf process
+yes
+

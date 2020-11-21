@@ -1,0 +1,36 @@
+
+hostname R1
+banner motd # This is R1, Trouble Ticket 8.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+no ip domain lookup
+line con 0
+logg sync
+exec-time 0 0
+exit
+inter g 0/0/0
+ip add 10.2.0.1 255.255.255.0
+no shut
+inter g 0/0/1
+ip add 10.0.1.1 255.255.255.0
+no shut
+int lo0
+ip add 64.100.10.1 255.255.255.0
+router ospf 1
+router-id 1.1.1.1
+network 10.0.1.0 0.0.0.255 area 0
+network 10.2.0.0 0.0.0.255 area 2
+default-information originate always
+area 2 stub no-summary
+exit
+ip route 0.0.0.0 0.0.0.0 lo0
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+clear ip ospf process
+yes
+

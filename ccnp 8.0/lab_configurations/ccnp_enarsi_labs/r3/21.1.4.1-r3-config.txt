@@ -1,0 +1,121 @@
+
+hostname R3
+no ip domain lookup
+ipv6 unicast-routing
+banner motd # This is R3, Trouble Ticket 21.1.4.1 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+interface g0/0/1
+ no ipv6 address
+ no shutdown
+ exit
+interface g0/0/1
+ ip address 10.0.0.1 255.255.255.0
+ ipv6 address fe80::3:1 link-local
+ ipv6 address 2001:db8:acad:10::1/64
+ no shutdown
+ exit
+interface s0/1/0
+ ip address 209.165.240.2 255.255.255.240
+ ipv6 address fe80::3:3 link-local
+ ipv6 address 2001:db8:acad:2000::2/64
+ no shutdown
+ exit
+interface s0/1/1
+ ip address 209.165.241.2 255.255.255.240
+ ipv6 address fe80::3:4 link-local
+ ipv6 address 2001:db8:acad:2001::2/64
+ no shutdown
+ exit
+interface loopback 0
+ ip address 209.165.200.227 255.255.255.255
+ ipv6 address fe80::3:5 link-local
+ ipv6 address 2001:db8:acad:227::1/64
+ no shutdown
+ exit
+interface loopback 1
+ ip address 209.165.227.1 255.255.255.255
+ no shutdown
+ exit
+ip route 209.165.200.226 255.255.255.255 209.165.240.1
+ip route 209.165.200.226 255.255.255.255 209.165.241.1
+ip route 0.0.0.0 0.0.0.0 209.165.200.226
+ipv6 route 2001:db8:acad:226::1/64 s0/1/0 2001:db8:acad:2000::1
+ipv6 route 2001:db8:acad:226::1/64 s0/1/1 2001:db8:acad:2001::1
+ipv6 route ::/0 2001:db8:acad:226::1
+ip prefix-list ROUTE-CONTROL4 permit 209.165.200.226/32
+ipv6 prefix-list ROUTE-CONTROL6 permit 2001:db8:acad:226::/64
+router eigrp LAB2114
+ address-family ipv4 unicast autonomous-system 1
+  eigrp router-id 0.0.0.3
+  network 10.0.0.0 0.0.0.255
+  topology base
+   redistribute static
+   distribute-list prefix ROUTE-CONTROL4 out g0/0/1
+  exit
+ address-family ipv6 unicast autonomous-system 1
+  eigrp router-id 0.0.0.3
+  af-interface default
+   shutdown
+   exit
+  af-interface g0/0/1
+   no shutdown
+   no passive-interface
+   exit
+  topology base
+   redistribute static
+   distribute-list prefix ROUTE-CONTROL6 out g0/0/1
+   exit
+ip access-list standard NAT-ELIGIBLE
+ permit 10.0.0.0 0.0.255.255
+ exit
+ip nat inside source list NAT-ELIGIBLE interface loop 1 overload
+interface g0/0/1
+ ip nat inside
+ exit
+interface s0/1/0
+ ip nat outside
+ exit
+interface s0/1/1
+ ip nat outside
+ exit
+router bgp 41
+ bgp router-id 3.3.3.3
+ neighbor 2001:db8:acad:2000::1 remote-as 15
+ neighbor 2001:db8:acad:2001::1 remote-as 15
+ neighbor 209.165.200.226 remote-as 15
+ neighbor 209.165.200.226 update-source loopback 0
+ neighbor 209.165.200.226 ebgp-multihop 3
+ address-family ipv4 unicast
+  neighbor 209.165.200.226 activate
+  no neighbor 2001:db8:acad:2000::1 activate
+  no neighbor 2001:db8:acad:2001::1 activate
+  network 209.165.227.1 mask 255.255.255.255
+  exit
+ address-family ipv6 unicast
+  no neighbor 209.165.200.226 activate
+  neighbor 2001:db8:acad:2000::1 activate
+  neighbor 2001:db8:acad:2001::1 activate
+  network 2001:db8:acad:16::/64
+  network 2001:db8:acad:27::/64
+  exit
+ exit
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exec-timeout 5 0
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

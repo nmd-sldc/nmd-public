@@ -1,0 +1,36 @@
+
+hostname R3
+no ip domain lookup
+banner motd # This is R3, Trouble Ticket 17.1.2.1 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+interface g0/0/0
+ip address 192.168.23.3 255.255.255.0
+no shutdown
+exit
+interface loopback 0
+ip address 209.165.201.1 255.255.255.128
+exit
+router bgp 64512
+ bgp router-id 3.3.3.3
+ no bgp default ipv4-unicast
+ neighbor 192.168.23.2 remote-as 64512
+address-family ipv4
+  network 209.165.201.0 mask 255.255.255.128
+  neighbor 192.168.23.2 activate
+ exit-address-family
+exit
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

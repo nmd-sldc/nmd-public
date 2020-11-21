@@ -1,0 +1,28 @@
+
+hostname R1
+no ip domain lookup
+enable secret cisco12345cisco
+banner motd # R1, Trouble ticket 22.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+interface g0/0/1
+ ip address 10.10.3.1 255.255.255.0
+ no shutdown
+ exit
+ip dhcp excluded-address 10.10.3.1 10.10.3.5
+ip dhcp pool HOST_ADDRESSING
+ network 10.10.3.0 255.255.255.0
+default-router 10.10.3.1
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

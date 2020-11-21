@@ -1,0 +1,59 @@
+
+hostname R1
+banner motd # This is R1, Trouble Ticket 23.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+service timestamps debug datetime msec
+service timestamps log datetime msec
+aaa new-model
+aaa authentication login default local
+ip domain name ccnplab.local
+crypto key generate rsa modulus 1024
+ip ssh ver 2
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+interface GigabitEthernet0/0/0
+ ip address 10.10.12.1 255.255.255.252
+no shutdown
+interface GigabitEthernet0/0/1
+ ip address 10.10.10.1 255.255.255.0
+ ip access-group ALLOW-TFTP out
+no shutdown
+router eigrp 10
+ network 10.10.10.0 0.0.0.255
+ network 10.10.12.0 0.0.0.3
+ passive-interface GigabitEthernet0/0/1
+ eigrp router-id 10.10.10.1
+ip forward-protocol nd
+ip access-list standard PERMIT-ADMIN
+ permit 10.10.10.0 0.0.0.255
+ip access-list extended ALLOW-TFTP
+ permit udp 10.10.0.0 0.0.255.255 host 10.10.10.10 eq tftp
+ permit udp 10.10.0.0 0.0.255.255 host 10.10.10.10 gt 1024
+ permit udp 10.10.0.0 0.0.255.255 host 10.10.10.10 eq syslog
+ permit udp 10.10.0.0 0.0.255.255 host 10.10.10.10 eq snmp
+ permit udp 10.10.0.0 0.0.255.255 host 10.10.10.10 eq snmptrap
+ permit tcp 10.10.0.0 0.0.255.255 eq 22 host 10.10.10.10
+ permit icmp any any
+logging trap debugging
+logging host 10.10.10.10
+snmp-server group ADMIN v3 priv read SNMP-RO access PERMIT-ADMIN
+snmp-server view SNMP-RO iso included
+snmp-server user USER1 ADMIN v3 auth sha cisco12345 pri aes 128 cisco54321
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+line vty 0 4
+ transport input ssh
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

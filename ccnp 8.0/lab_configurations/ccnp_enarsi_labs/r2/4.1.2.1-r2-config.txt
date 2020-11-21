@@ -1,0 +1,36 @@
+
+hostname R2
+banner motd # This is R2, Trouble Ticket 4.1.2.1 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+interface g0/0/0
+ip address 10.0.12.2 255.255.255.0
+no shutdown
+exit
+interface g0/0/1
+ip address 10.0.23.1 255.255.255.0
+no shutdown
+exit
+router eigrp 412
+ eigrp router-id 1.1.1.1
+ network 10.0.12.0 0.0.0.255
+ network 10.0.23.0 0.0.0.255
+ exit
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

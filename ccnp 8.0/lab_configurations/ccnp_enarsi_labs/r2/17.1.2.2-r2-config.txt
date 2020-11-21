@@ -1,0 +1,78 @@
+
+hostname R2
+no ip domain lookup
+banner motd # This is R2, Trouble Ticket 17.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+no ip domain lookup
+ipv6 unicast-routing
+router ospfv3 1
+ router-id 2.2.2.2
+ exit
+interface GigabitEthernet0/0/0
+ ip address 10.1.12.2 255.255.255.0
+ negotiation auto
+ ipv6 address FE80::12:2 link-local
+ ipv6 address 2001:DB8:ACAD:12::2/64
+ ospfv3 1 ipv4 area 0
+ ospfv3 1 ipv6 area 0
+ no shut
+ exit
+interface GigabitEthernet0/0/1
+ ip address 10.1.23.2 255.255.255.0
+ negotiation auto
+ ipv6 address FE80::23:2 link-local
+ ipv6 address 2001:DB8:ACAD:23::2/64
+ no shut
+router eigrp CISCO
+ address-family ipv4 unicast autonomous-system 64512
+  af-interface default
+   shutdown
+  exit-af-interface
+  af-interface GigabitEthernet0/0/1
+   no shutdown
+  exit-af-interface
+  topology base
+   redistribute ospfv3 1 route-map OSPF-into-EIGRP
+  exit-af-topology
+  network 10.1.23.0 0.0.0.255
+  eigrp router-id 2.2.2.2
+ exit-address-family
+ address-family ipv6 unicast autonomous-system 64512
+  af-interface default
+   shutdown
+  exit-af-interface
+  af-interface GigabitEthernet0/0/1
+   no shutdown
+  exit-af-interface
+  topology base
+   redistribute ospf 1 include-connected
+  exit-af-topology
+ exit-address-family
+router ospfv3 1
+ address-family ipv4 unicast
+  redistribute eigrp 64521 metric 25 metric-type 1
+ exit-address-family
+ address-family ipv6 unicast
+  distribute-list prefix-list EIGRP-into-OSPF out eigrp 64512
+  redistribute eigrp 64512 include-connected
+ exit-address-family
+exit
+ipv6 prefix-list EIGRP-into-OSPF seq 5 permit 2001:DB8::/32 ge 64 le 64
+route-map OSPF-into-EIGRP permit 10
+ set metric 100
+ exit
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

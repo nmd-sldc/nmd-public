@@ -1,0 +1,88 @@
+
+hostname R2
+banner motd # This is R2, Trouble Ticket 14.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+no ip domain lookup
+ipv6 unicast-routing
+line con 0
+logg sync
+exec-time 0 0
+exit
+inter g 0/0/0
+ipv6 add 2001:db8:c0c0:a001::2/64
+ipv6 add fe80::a001:2 link-local
+ip add 192.168.2.2 255.255.255.0
+ospfv3 1 ipv4 area 0
+ospfv3 1 ipv6 area 0
+no shut
+inter g 0/0/1
+ipv6 add 2001:db8:c0c0:a002::2/64
+ipv6 add fe80::a002:2 link-local
+ip add 192.168.5.2 255.255.255.0
+ospfv3 1 ipv4 area 0
+ospfv3 1 ipv6 area 0
+no shut
+int lo1
+ipv6 add 2001:db8:c0c0:a021::1/64
+ipv6 add fe80::a021:1 link-local
+ip add 192.168.3.1 255.255.255.0
+ospfv3 1 ipv4 area 0
+ospfv3 1 ipv6 area 0
+ospfv3 1 ipv4 network point-to-point
+ospfv3 1 ipv6 network point-to-point
+exit
+int lo2
+ipv6 add 2001:db8:c0c0:a022::1/64
+ipv6 add fe80::a022:1 link-local
+ip add 192.168.4.1 255.255.255.0
+ospfv3 1 ipv4 area 0
+ospfv3 1 ipv6 area 0
+ospfv3 1 ipv4 network point-to-point
+ospfv3 1 ipv6 network point-to-point
+exit
+inter lo0
+description Loopback for BGP peering
+ip add 192.168.99.2 255.255.255.255
+ipv6 add 2001:db8:c0c0:99::2/128
+ipv6 add fe80::99:2 link-local
+ospfv3 1 ipv4 area 0
+ospfv3 1 ipv6 area 0
+exit
+router ospfv3 1
+address-family ipv4 unicast
+router-id 2.2.2.2
+exit
+address-family ipv6 unicast
+router-id 2.2.2.2
+exit
+router bgp 65000
+bgp router-id 2.2.2.2
+neighbor 192.168.99.1 remote-as 65000
+neighbor 192.168.99.1 update-source loopback0
+neighbor 2001:db8:c0c0:99::1 remote-as 65000
+neighbor 2001:db8:c0c0:99::1 update-source loopback0
+neighbor 192.168.99.3 remote-as 65000
+neighbor 192.168.99.3 update-source loopback0
+neighbor 2001:db8:c0c0:99::3 remote-as 65000
+neighbor 2001:db8:c0c0:99::3 update-source loopback0
+address-family ipv4 unicast
+network 192.168.3.0 mask 255.255.255.0
+network 192.168.4.0 mask 255.255.255.0
+neighbor 192.168.99.1 activate
+neighbor 192.168.99.3 activate
+exit
+address-family ipv6 unicast
+network 2001:db8:c0c0:a021::/64
+network 2001:db8:c0c0:a022::/64
+neighbor 2001:db8:c0c0:99::1 activate
+neighbor 2001:db8:c0c0:99::3 activate
+exit
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+

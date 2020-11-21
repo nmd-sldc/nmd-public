@@ -1,0 +1,103 @@
+
+hostname D2
+no ip domain lookup
+ip routing
+ipv6 unicast-routing
+banner motd # This is D2, Trouble Ticket 21.1.4.1  #
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+interface range g1/0/1-24
+ switchport mode access
+ shutdown
+ exit
+interface g1/0/11
+ no switchport
+ ip address 10.0.0.2 255.255.255.0
+ ipv6 address fe80::d2:1 link-local
+ ipv6 address 2001:db8:acad:10::2/64
+ no shutdown
+ exit
+interface g1/0/23
+ switchport mode access
+ switchport access vlan 16
+ spanning-tree portfast
+ no shutdown
+ exit
+interface g1/0/24
+ switchport mode access
+ switchport access vlan 27
+ spanning-tree portfast
+ no shutdown
+ exit
+interface vlan 16
+ ip address 10.0.16.1 255.255.255.0
+ ipv6 address fe80::d2:2 link-local
+ ipv6 address 2001:db8:acad:16::1/64
+ ipv6 nd prefix 2001:db8:acad:16::/64 no-autoconfig
+ no shutdown
+ exit
+interface vlan 27
+ ip address 10.0.27.1 255.255.255.0
+ ipv6 address fe80::d2:3 link-local
+ ipv6 address 2001:db8:acad:27::1/64
+ ipv6 nd prefix 2001:db8:acad:27::/64 no-autoconfig
+ no shutdown
+ exit
+ipv6 dhcp pool VLAN16DHCP6
+ address prefix 2001:db8:acad:16::/64
+ exit
+ipv6 dhcp pool VLAN27DHCP6
+address prefix 2001:db8:acad:27::/64
+ exit
+interface vlan 16
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server VLAN16DHCP6
+ exit
+interface vlan 27
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server VLAN27DHCP6
+ exit
+ip dhcp excluded-address 10.0.16.1 10.0.16.5
+ip dhcp excluded-address 10.0.27.1 10.0.27.5
+ip dhcp pool VLAN16DHCP4
+ network 10.0.16.0 255.255.255.0
+ default-router 10.0.16.1
+ exit
+ip dhcp pool VLAN27DHCP4
+ network 10.0.27.0 255.255.255.0
+ default-router 10.0.27.1
+ exit
+router eigrp LAB2114
+ address-family ipv4 unicast autonomous-system 1
+  eigrp router-id 0.0.0.132
+  network 10.0.0.0 0.0.255.255
+  exit
+ address-family ipv6 unicast autonomous-system 1
+  eigrp router-id 0.0.0.132
+  af-interface default
+   passive-interface
+   exit
+  af-interface g1/0/11
+   no passive-interface
+   exit
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exec-timeout 5 0
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

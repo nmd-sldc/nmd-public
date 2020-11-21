@@ -1,0 +1,43 @@
+
+hostname R2
+banner motd # This is R2, Trouble Ticket 23.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+service timestamps debug datetime msec
+service timestamps log datetime msec
+aaa new-model
+aaa authentication login default local
+ip domain name ccnplab.local
+crypto key generate rsa modulus 1024
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+interface g0/0/0
+ ip address 10.10.12.2 255.255.255.252
+no shut
+router eigrp 10
+ network 10.10.12.0 0.0.0.3
+ auto-summary
+ eigrp router-id 10.10.12.2
+ip forward-protocol nd
+ip ssh version 2
+ip scp server enable
+logging trap debugging
+logging source-interface gigabitEthernet0/0/0
+logging host 10.10.10.10
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+line vty 0 15
+ transport input ssh
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

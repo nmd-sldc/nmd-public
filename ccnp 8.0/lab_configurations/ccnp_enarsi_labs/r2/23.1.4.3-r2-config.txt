@@ -1,0 +1,62 @@
+hostname R2
+no ip domain lookup
+ipv6 unicast-routing
+banner motd # This is R2, Trouble Ticket 23.1.4.3 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+ip domain name ENCOR.23
+enable algorithm-type scrypt secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+interface g0/0
+ ip address 209.165.200.2 255.255.255.0
+ ipv6 address fe80::2:1 link-local
+ ipv6 address 2001:db8:200::2/64
+ no shutdown
+ exit
+interface g0/1
+ ip address 209.165.201.2 255.255.255.0
+ ipv6 address fe80::2:1 link-local
+ ipv6 address 2001:db8:201::2/64
+ no shutdown
+ exit
+interface loopback 0
+ ip address 209.165.224.1 255.255.255.255
+ ipv6 address fe80::2:3 link-local
+ ipv6 address 2001:db8:224::1/64
+ no shutdown
+ exit
+router bgp 77
+ bgp router-id 4.6.77.2
+ no bgp default ipv4-unicast
+ neighbor 209.165.200.1 remote-as 138
+ neighbor 209.165.201.1 remote-as 138
+ neighbor 2001:db8:200::1 remote-as 138
+ neighbor 2001:db8:201::1 remote-as 138
+ address-family ipv4 unicast
+  network 209.165.224.1 mask 255.255.255.255
+  neighbor 209.165.200.1 activate
+  neighbor 209.165.201.1 activate
+  exit
+ address-family ipv6 unicast
+  network 2001:db8:224::/64
+  neighbor 2001:db8:200::1 activate
+  neighbor 2001:db8:201::1 activate
+  exit
+ exit
+line con 0
+ login local
+ logging synchronous
+ exec-timeout 0 0
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exec-timeout 0 0
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end

@@ -1,0 +1,60 @@
+
+hostname R1
+no ip domain lookup
+banner motd # This is R1, Trouble Ticket 17.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+ipv6 unicast-routing
+hostname R1
+router ospfv3 1
+ router-id 1.1.1.1
+ exit
+interface Loopback0
+ ip address 10.1.1.1 255.255.255.0
+ ipv6 address FE80::1:1 link-local
+ ipv6 address 2001:DB8:ACAD:1::1/64
+ ospfv3 network point-to-point
+ ospfv3 1 ipv4 area 0
+ ospfv3 1 ipv6 area 0
+ no shutdown
+ exit
+interface GigabitEthernet0/0/0
+ ip address 10.1.12.1 255.255.255.0
+ negotiation auto
+ ipv6 address FE80::12:1 link-local
+ ipv6 address 2001:DB8:ACAD:12::1/64
+ ospfv3 1 ipv6 area 0
+ ospfv3 1 ipv4 area 0
+ no shutdown
+ exit
+interface GigabitEthernet0/0/1
+ ip address 10.1.11.1 255.255.255.0
+ negotiation auto
+ ipv6 address FE80::11:1 link-local
+ ipv6 address 2001:DB8:ACAD:11::1/64
+ ospfv3 1 ipv4 area 11
+ ospfv3 1 ipv6 area 11
+ no shutdown
+ exit
+router ospfv3 1
+ address-family ipv4 unicast
+  passive-interface Loopback0
+ exit-address-family
+ address-family ipv6 unicast
+  passive-interface Loopback0
+ exit-address-family
+exit
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

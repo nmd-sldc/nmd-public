@@ -1,0 +1,39 @@
+
+hostname D2
+no ip domain lookup
+
+line con 0
+logging sync
+exec-time 0 0
+exit
+banner motd # This is D2, Troubleshoot Route Maps and PBR #
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+interface G1/0/11
+ no switchport
+ description Connects to R3
+ ip address 192.168.0.2 255.255.255.252
+ no shut
+ exit
+interfac, G1/0/12 - 24
+ shut
+exit
+ip routing
+router ospf 123
+ router-id 3.3.3.2
+ auto-cost reference-bandwidth 1000
+ network 192.168.0.0 0.0.0.3 area 0
+ network 192.168.1.0 0.0.0.255 area 0
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+clear ip ospf process
+yes
+

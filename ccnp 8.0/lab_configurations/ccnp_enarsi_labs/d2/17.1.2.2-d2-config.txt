@@ -1,0 +1,69 @@
+
+hostname D2
+no ip domain lookup
+banner motd # This is D2, Trouble Ticket 17.1.2.2 #
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+ip routing
+ipv6 unicast-routing
+interface GigabitEthernet1/0/11
+ no switchport
+ ip address 10.1.32.2 255.255.255.0
+ ipv6 address FE80::32:2 link-local
+ ipv6 address 2001:DB8:ACAD:32::2/64
+no shut
+exit
+interface Loopback0
+ ip address 198.51.100.1 255.255.255.128
+ ipv6 address FE80::198:2 link-local
+ ipv6 address 2001:DB8:198:51:100::1/80
+no shut
+exit
+router eigrp CISCO
+address-family ipv4 unicast autonomous-system 64512
+  af-interface default
+   shutdown
+  exit-af-interface
+  af-interface Loopback0
+   no shutdown
+   passive-interface
+  exit-af-interface
+  af-interface GigabitEthernet1/0/11
+   no shutdown
+  exit-af-interface
+  topology base
+  exit-af-topology
+  network 10.1.32.0 0.0.0.255
+  network 198.51.100.0 0.0.0.127
+  eigrp router-id 22.22.22.22
+ exit-address-family
+address-family ipv6 unicast autonomous-system 64512
+  af-interface default
+   shutdown
+  exit-af-interface
+  af-interface Loopback0
+   no shutdown
+   passive-interface
+  exit-af-interface
+  af-interface GigabitEthernet1/0/11
+   no shutdown
+  exit-af-interface
+  topology base
+  exit-af-topology
+  eigrp router-id 22.22.22.22
+ exit-address-family
+exit
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

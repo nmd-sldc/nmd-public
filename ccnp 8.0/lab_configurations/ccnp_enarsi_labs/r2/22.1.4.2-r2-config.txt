@@ -1,0 +1,47 @@
+
+service timestamps debug datetime msec
+service timestamps log datetime msec
+hostname R2
+banner motd #This is R2, Trouble Ticket 22.1.4.2 #
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+vrf definition Mgmt-intf
+address-family ipv4
+ exit-address-family
+address-family ipv6
+exit-address-family
+no aaa new-model
+no ip domain lookup
+ip domain name CCNPv8.CoPP.Lab
+login on-success log
+username admin privilege 15 algorithm-type scrypt secret cisco1234
+interface GigabitEthernet0/0/0
+ ip address 172.16.12.2 255.255.255.252
+ negotiation auto
+ no shutdown
+router eigrp 123
+ network 172.16.12.0 0.0.0.3
+ eigrp router-id 0.0.0.2
+ip forward-protocol nd
+no ip http server
+ip http secure-server
+ip tftp source-interface GigabitEthernet0/0/0
+control-plane
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ transport input none
+ stopbits 1
+line aux 0
+ stopbits 1
+line vty 0 4
+transport input telnet ssh
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

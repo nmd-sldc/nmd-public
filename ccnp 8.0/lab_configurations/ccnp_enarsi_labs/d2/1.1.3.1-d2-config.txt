@@ -1,0 +1,44 @@
+
+hostname D2
+banner motd # This is D2, Trouble Ticket 1.1.3.1 #
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+interface range g1/0/1 - 24
+ switchport mode access
+ shutdown
+ exit
+interface g1/0/11
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+ exit
+interface range g1/0/23-24
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+ exit
+interface vlan 10
+ ip address 10.10.3.2 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 10.10.3.1
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+line vty 0 15
+ login local
+ transport input telnet
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

@@ -1,0 +1,80 @@
+
+hostname R3
+banner motd # This is R3, Trouble Ticket 17.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+no ip domain lookup
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+ipv6 unicast-routing
+interface Loopback0
+ ip address 10.3.3.3 255.255.255.0
+ ipv6 address FE80::3:3 link-local
+ ipv6 address 2001:DB8:ACAD:3::3/64
+ no shut
+ exit
+interface GigabitEthernet0/0/0
+ ip address 10.1.23.3 255.255.255.0
+ negotiation auto
+ ipv6 address FE80::23:3 link-local
+ ipv6 address 2001:DB8:ACAD:23::3/64
+ no shut
+ exit
+interface GigabitEthernet0/0/1
+ ip address 10.1.32.3 255.255.255.0
+ negotiation auto
+ ipv6 address FE80::32:3 link-local
+ ipv6 address 2001:DB8:ACAD:32::3/64
+ no shut
+ exit
+router eigrp CISCO
+ address-family ipv4 unicast autonomous-system 64512
+  af-interface default
+   shutdown
+  exit-af-interface
+  af-interface GigabitEthernet0/0/0
+   no shutdown
+  exit-af-interface
+  af-interface GigabitEthernet0/0/1
+   no shutdown
+  exit-af-interface
+  af-interface Loopback0
+   no shutdown
+  exit-af-interface
+  topology base
+  exit-af-topology
+  network 10.1.23.0 0.0.0.255
+  network 10.1.32.0 0.0.0.255
+  network 10.3.3.0 0.0.0.255
+  eigrp router-id 3.3.3.3
+ exit-address-family
+address-family ipv6 unicast autonomous-system 64512
+  af-interface default
+   shutdown
+  exit-af-interface
+  af-interface GigabitEthernet0/0/0
+   no shutdown
+  exit-af-interface
+  af-interface GigabitEthernet0/0/1
+   no shutdown
+  exit-af-interface
+  af-interface Loopback0
+   no shutdown
+  exit-af-interface
+  topology base
+  exit-af-topology
+  eigrp router-id 3.3.3.3
+ exit-address-family
+exit
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

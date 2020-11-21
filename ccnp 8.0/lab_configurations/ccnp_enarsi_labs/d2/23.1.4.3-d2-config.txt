@@ -1,0 +1,162 @@
+hostname D2
+no ip domain lookup
+ip routing
+ipv6 unicast-routing
+banner motd # This is D2, Trouble Ticket 23.1.4.3 #
+ip domain name ENCOR.23
+enable algorithm-type scrypt secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+ip access-list standard VTY-CONTROL
+ permit 172.16.0.0 0.0.255.255
+ deny any log
+ exit
+interface range g1/0/1-24
+ switchport mode access
+ shutdown
+ exit
+interface range g1/0/1-4
+ switchport mode trunk
+ channel-group 12 mode active
+ no shutdown
+ exit
+interface range g1/0/5-6
+ switchport mode trunk
+ channel-group 2 mode active
+ no shutdown
+ exit
+interface g1/0/22
+ switchport mode access
+ switchport access vlan 3
+ spanning-tree portfast
+ shutdown
+interface g1/0/23
+ switchport mode access
+ switchport access vlan 8
+ spanning-tree portfast
+ shutdown
+interface g1/0/24
+ switchport mode access
+ switchport access vlan 13
+ spanning-tree portfast
+ shutdown
+ exit
+interface g1/0/11
+ no switchport
+ ip address 172.16.1.2 255.255.255.0
+ ipv6 address fe80::d1:1 link-local
+ ipv6 address 2001:db8:acad:1::2/64
+ no shutdown
+ exit
+interface vlan 3
+ ip address 172.16.3.2 255.255.255.0
+ ipv6 address fe80::d2:2 link-local
+ ipv6 address 2001:db8:acad:3::2/64
+ standby version 2
+ standby 34 ip 172.16.3.254
+ standby 34 preempt
+ standby 36 ipv6 autoconfig
+ standby 36 preempt
+ no shutdown
+ exit
+interface vlan 8
+ ip address 172.16.8.2 255.255.255.0
+ ipv6 address fe80::d2:3 link-local
+ ipv6 address 2001:db8:acad:8::2/64
+ standby version 2
+ standby 84 ip 172.16.8.254
+ standby 84 priority 110
+ standby 84 preempt
+ standby 86 ipv6 autoconfig
+ standby 86 priority 110
+ standby 86 preempt
+ no shutdown
+ exit
+interface vlan 13
+ ip address 172.16.13.2 255.255.255.0
+ ipv6 address 2001:db8:acad:13::2/64
+standby version 2
+ standby 134 ip 172.16.13.254
+ standby 134 preempt
+ standby 136 ipv6 autoconfig
+ standby 136 preempt
+ no shutdown
+ exit
+router ospfv3 1
+ router-id 0.0.138.132
+  exit
+interface g1/0/11
+ ospfv3 1 ipv4 area 0
+ ospfv3 1 ipv6 area 0
+ exit
+interface vlan 3
+ ospfv3 1 ipv4 area 0
+ ospfv3 1 ipv6 area 0
+ exit
+interface vlan 8
+ ospfv3 1 ipv4 area 0
+ ospfv3 1 ipv6 area 0
+ exit
+interface vlan 13
+ ospfv3 1 ipv4 area 0
+ ospfv3 1 ipv6 area 0
+ exit
+ip dhcp excluded-address 172.16.8.1 172.16.8.20
+ip dhcp excluded-address 172.16.8.31 172.16.8.254
+ip dhcp excluded-address 172.16.13.1 172.16.13.20
+ip dhcp excluded-address 172.16.13.31 172.16.13.254
+ip dhcp pool VLAN8DHCP
+ network 172.16.8.0 255.255.255.0
+ default-router 172.16.8.254
+ exit
+ip dhcp pool VLAN13DHCP
+ network 172.16.13.0 255.255.255.0
+ default-router 172.16.13.254
+ exit
+ip sla 14
+ icmp-echo 209.165.201.2 
+  frequency 10
+  exit
+ip sla 16
+ icmp-echo 2001:db8:201::2
+  frequency 10
+  exit
+ip sla schedule 14 life forever start-time now
+ip sla schedule 16 life forever start-time now
+track 14 ip sla 14
+ exit
+track 16 ip sla 16
+ exit
+interface vlan 3
+ standby 34 track 14 decrement 20
+ standby 36 track 16 decrement 20
+ exit
+interface vlan 8
+ standby 84 track 14 decrement 20
+ standby 86 track 16 decrement 20
+ exit
+interface vlan 13
+ standby 134 track 14 decrement 20
+ standby 136 track 16 decrement 20
+ exit
+line con 0
+ login local
+ logging synchronous
+ exec-timeout 0 0
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ access-class VTY-CONTROL in
+ exec-timeout 0 0
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end

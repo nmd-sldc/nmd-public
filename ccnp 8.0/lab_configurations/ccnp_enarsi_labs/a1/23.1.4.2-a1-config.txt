@@ -1,0 +1,68 @@
+hostname A1
+no ip domain lookup
+banner motd # This is A1, Trouble Ticket 23.1.4.2 #
+ip domain name ENCOR.23
+enable algorithm-type scrypt secret cisco12345
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+!
+interface FastEthernet0
+ ip address 10.136.abracadabra 255.255.255.0
+ no shutdown
+!
+ip access-list standard VTY-CONTROL
+ permit 172.16.0.0 0.0.255.255
+ deny any log
+ exit
+interface range g1/0/1-24
+ switchport mode access
+ shutdown
+ exit
+interface range g1/0/1-2
+ switchport mode trunk
+ channel-group 1 mode active
+ no shutdown
+ exit
+interface range g1/0/3-4
+ switchport mode trunk
+ channel-group 2 mode active
+ no shutdown
+ exit
+interface g1/0/22
+ switchport mode access
+ switchport access vlan 3
+ spanning-tree portfast
+ shutdown
+interface g1/0/23
+ switchport mode access
+ switchport access vlan 8
+ spanning-tree portfast
+ no shutdown
+interface g1/0/24
+ switchport mode access
+ switchport access vlan 13
+ spanning-tree portfast
+ no shutdown
+ exit
+interface vlan 3
+ ip address 172.16.3.3 255.255.255.0
+ ipv6 address fe80::a1:1 link-local
+ ipv6 address 2001:db8:acad:3::3/64
+ exit
+ip default-gateway 172.16.3.254
+interface g1/0/22
+ shutdown
+ exit
+line con 0
+ login local
+ logging synchronous
+ exec-timeout 0 0
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ access-class VTY-CONTROL in
+ exec-timeout 0 0
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end

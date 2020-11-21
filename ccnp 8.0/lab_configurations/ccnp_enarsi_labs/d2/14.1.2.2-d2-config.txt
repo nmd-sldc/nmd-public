@@ -1,0 +1,83 @@
+
+hostname D2
+banner motd # This is D2, Trouble Ticket 14.1.2.2 #
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+no ip domain lookup
+ip routing
+ipv6 unicast-routing
+line con 0
+logg sync
+exec-time 0 0
+exit
+inter g 1/0/11
+no switchport
+ipv6 add 2001:db8:b0b:f001::1/64
+ipv6 add fe80::b0b:f001:1 link-local
+ip add 172.16.2.1 255.255.255.252
+no shut
+exit
+interface lo1
+ipv6 add 2001:db8:b0b:f002::1/64
+ipv6 add fe80::b0b:f002:1 link-local
+ip add 10.2.1.1 255.255.255.0
+exit
+interface lo10
+ipv6 add 2001:db8:b0b1::1/48
+ip add 10.2.10.1 255.255.255.0
+no shut
+exit
+interface lo20
+ipv6 add 2001:db8:b0b2::1/48
+ip add 10.2.20.1 255.255.255.0
+no shut
+exit
+interface lo30
+ipv6 add 2001:db8:b0b3::1/48
+ip add 10.2.30.1 255.255.255.0
+no shut
+exit
+interface lo48
+ipv6 add 2001:db8:cafe::1/48
+no shut
+exit
+inter range g1/0/6-10, g1/0/12-24
+shut
+exit
+ipv6 prefix-list CAFE-POLICY permit 2001:db8:cafe::/48 
+route-map SET-AS-PATH-CAFE permit 10
+match ipv6 address prefix-list CAFE-POLICY
+set as-path prepend 65200 65200 65200 65200
+exit
+route-map SET-AS-PATH-CAFE permit 20
+exit
+router bgp 65200
+bgp router-id 2.0.0.2
+neighbor 172.16.2.2 remote-as 65000
+neighbor 2001:db8:b0b:f001::2 remote-as 65000
+address-family ipv4 unicast
+network 10.2.1.0 mask 255.255.255.0
+network 10.2.10.0 mask 255.255.255.0
+network 10.2.20.0 mask 255.255.255.0
+network 10.2.30.0 mask 255.255.255.0
+neighbor 172.16.2.2 activate
+exit
+address-family ipv6 unicast
+network 2001:db8:b0b:f002::/64
+network 2001:db8:b0b1::/48
+network 2001:db8:b0b2::/48
+network 2001:db8:b0b3::/48
+network 2001:db8:cafe::/48
+neighbor 2001:db8:b0b:f001::2 activate
+neighbor 2001:db8:b0b:f001::2 route-map SET-AS-PATH-CAFE out
+exit
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+

@@ -1,0 +1,51 @@
+
+hostname R3
+no ip domain lookup
+line con 0
+ logging sync
+ exec-time 0 0
+ exit
+banner motd # This is R3, Troubleshoot Route Maps and PBR #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+interface G0/0/0
+ description Connection to R2
+ ip add 172.16.1.2 255.255.255.252
+ no shut
+ exit
+interface S0/1/0
+ description Serial Connection to R1
+ ip add 172.16.2.2 255.255.255.252
+ no shut
+ exit
+interface G0/0/1
+ description Connection to D2
+ ip add 192.168.0.1 255.255.255.252
+ no shut
+ exit
+router ospf 123
+ router-id 3.3.3.1
+ auto-cost reference-bandwidth 1000
+ network 192.168.0.0 0.0.0.3 area 0
+ network 172.16.1.0 0.0.0.3 area 0
+ network 172.16.2.0 0.0.0.3 area 0
+exit
+ip access-list extended R3-TRAFFIC
+permit ip any 10.10.0.0 0.0.255.255
+exit
+route-map LOCAL-PBR deny
+match ip address R3-TRAFFIC
+set ip next-hop 172.16.2.1
+exit
+ip local policy route-map LOCAL-PBR
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+clear ip ospf process
+yes
+

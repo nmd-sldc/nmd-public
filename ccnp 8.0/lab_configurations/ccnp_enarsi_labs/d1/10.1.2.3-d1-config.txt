@@ -1,0 +1,85 @@
+
+hostname D1
+banner motd # This is D1, Trouble Ticket 10.1.2.3 #
+no ip domain lookup
+ip routing
+ipv6 unicast-routing
+line con 0
+logg sync
+exec-time 0 0
+exit
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+inter g 1/0/11
+no switchport
+ipv6 add 2001:db8:acad:a001::2/64
+ipv6 add fe80::a001:2 link-local
+ospfv3 1 ipv6 area 0
+no shut
+exit
+inter g 1/0/23
+no switchport
+ipv6 add 2001:db8:acad:a102::1/64
+ipv6 add fe80::a102:1 link-local
+ospfv3 1 ipv6 area 1
+no shut
+exit
+inter g 1/0/24
+no switchport
+ipv6 add 2001:db8:acad:a103::1/64
+ipv6 add fe80::a103:1 link-local
+ospfv3 1 ipv6 area 1
+no shut
+exit
+interface g 1/0/1
+ description Channel to D2
+ no switchport
+ channel-group 1 mode on
+ no shutdown
+exit
+interface g 1/0/2
+ description Channel to D2
+ no switchport
+ channel-group 1 mode on
+ no shutdown
+exit
+interface g 1/0/3
+ description Channel to D2
+ no switchport
+ channel-group 2 mode on
+ no shutdown
+exit
+interface g 1/0/4
+ description Channel to D2
+ no switchport
+ channel-group 2 mode on
+ no shutdown
+exit
+inter port-channel 1
+ipv6 add 2001:db8:acad:a002::1/64
+ipv6 add fe80::a002:1 link-local
+ospfv3 1 ipv6 area 0
+no shut
+exit
+inter port-channel 2
+ipv6 add 2001:db8:acad:a101::1/64
+ipv6 add fe80::a101:1 link-local
+ospfv3 1 ipv6 area 1
+no shut
+exit
+inter range g1/0/5-10, g1/0/12-22
+shut
+exit
+router ospfv3 1
+address-family ipv6 unicast
+router-id 4.4.4.4
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+

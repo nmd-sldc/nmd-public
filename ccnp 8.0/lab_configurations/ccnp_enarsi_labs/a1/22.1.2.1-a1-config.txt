@@ -1,0 +1,44 @@
+hostname A1
+no ip domain lookup
+enable secret cisco12345cisco
+banner motd # A1, Trouble Ticket 22.1.2.1 #
+aaa new-model
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+username admin algorithm-type scrypt secret cisco1234
+username localuser algorithm-type scrypt secret letmein
+aaa authentication login default enable
+aaa authentication login VTY-AUTH local
+aaa authentication login CON-AUTH enable
+aaa session-id common
+!
+interface FastEthernet0
+ ip address 10.136.abracadabra 255.255.255.0
+ no shutdown
+!
+interface vlan 1
+ ip address 10.10.3.3 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 10.10.3.1
+interface range g1/0/1-2
+ switchport mode trunk
+ channel-group 1 mode active
+ no shutdown
+ exit
+interface range g1/0/3-24
+ shutdown
+ exit
+interface g1/0/23
+ switchport mode access
+ spanning-tree portfast
+ no shutdown
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+line vty 0 4
+ login authentication VTY-AUTH
+line vty 5 15
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end

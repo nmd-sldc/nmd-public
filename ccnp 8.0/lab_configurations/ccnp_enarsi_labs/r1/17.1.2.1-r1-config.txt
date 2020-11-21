@@ -1,0 +1,39 @@
+
+hostname R1
+no ip domain lookup
+banner motd # This is R1, Trouble Ticket 17.1.2.1 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+interface g0/0/0
+ip address 10.1.12.1 255.255.255.0
+no shutdown
+exit
+interface g0/0/1
+ip address 10.1.10.1 255.255.255.0
+no shutdown
+exit
+inter lo 0
+ip add 10.1.1.1 255.255.255.0
+ip ospf network point-to-point
+no shutdown
+exit
+router ospf 1
+ router-id 1.1.1.1
+ network 10.1.1.0 0.0.0.255 area 0
+ network 10.1.10.0 0.0.0.255 area 10
+ network 10.1.12.0 0.0.0.255 area 0
+ exit 
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

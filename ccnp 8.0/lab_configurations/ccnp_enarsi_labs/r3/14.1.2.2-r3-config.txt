@@ -1,0 +1,91 @@
+
+hostname R3
+banner motd # This is R3, Trouble Ticket 14.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+no ip domain lookup
+ipv6 unicast-routing
+line con 0
+logg sync
+exec-time 0 0
+exit
+inter g 0/0/0
+ipv6 add 2001:db8:c0c0:a002::1/64
+ipv6 add fe80::a002:1 link-local
+ip add 192.168.5.1 255.255.255.0
+ospfv3 1 ipv4 area 0
+ospfv3 1 ipv6 area 0
+no shut
+inter g 0/0/1
+ipv6 add 2001:db8:b0b:f001::2/64
+ipv6 add fe80::f001:2 link-local
+ip add 172.16.2.2 255.255.255.252
+no shut
+int lo1
+ipv6 add 2001:db8:c0c0:a031::1/64
+ipv6 add fe80::a031:1 link-local
+ip add 192.168.6.1 255.255.255.0
+ospfv3 1 ipv4 area 0
+ospfv3 1 ipv6 area 0
+ospfv3 1 ipv4 network point-to-point
+ospfv3 1 ipv6 network point-to-point
+exit
+inter lo0
+description Loopback for BGP peering
+ip add 192.168.99.3 255.255.255.255
+ipv6 add 2001:db8:c0c0:99::3/128
+ipv6 add fe80::99:3 link-local
+ospfv3 1 ipv4 area 0
+ospfv3 1 ipv6 area 0
+exit
+router ospfv3 1
+address-family ipv4 unicast
+router-id 3.3.3.3
+exit
+address-family ipv6 unicast
+router-id 3.3.3.3
+exit
+ipv6 prefix-list CAFE-POLICY permit 2001:db8:cafe::/48 
+route-map AS65200-CAFE permit 10
+match ipv6 address prefix-list CAFE-POLICY
+set weight 400
+exit
+route-map AS65200-CAFE permit 20
+exit
+router bgp 65000
+bgp router-id 3.3.3.3
+neighbor 172.16.2.1 remote-as 65200
+neighbor 2001:db8:b0b:f001::1 remote-as 65200
+neighbor 192.168.99.1 remote-as 65000
+neighbor 192.168.99.1 update-source loopback0
+neighbor 2001:db8:c0c0:99::1 remote-as 65000
+neighbor 2001:db8:c0c0:99::1 update-source loopback0
+neighbor 192.168.99.2 remote-as 65000
+neighbor 192.168.99.2 update-source loopback0
+neighbor 2001:db8:c0c0:99::2 remote-as 65000
+neighbor 2001:db8:c0c0:99::2 update-source loopback0
+address-family ipv4 unicast
+network 192.168.6.0 mask 255.255.255.0
+neighbor 172.16.2.1 activate
+neighbor 192.168.99.1 activate
+neighbor 192.168.99.1 next-hop-self
+neighbor 192.168.99.2 activate
+neighbor 192.168.99.2 next-hop-self
+exit
+address-family ipv6 unicast
+network 2001:db8:c0c0:a031::/64
+neighbor 2001:db8:b0b:f001::1 activate
+neighbor 2001:db8:b0b:f001::1 route-map AS65200-CAFE in
+neighbor 2001:db8:c0c0:99::1 activate
+neighbor 2001:db8:c0c0:99::1 next-hop-self
+neighbor 2001:db8:c0c0:99::2 activate
+neighbor 2001:db8:c0c0:99::2 next-hop-self
+exit
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+

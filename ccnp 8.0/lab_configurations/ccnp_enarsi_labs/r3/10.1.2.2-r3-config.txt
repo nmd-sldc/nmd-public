@@ -1,0 +1,33 @@
+
+hostname R3
+banner motd # This is R3, Trouble Ticket 10.1.2.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+no ip domain lookup
+ipv6 unicast-routing
+line con 0
+logg sync
+exec-time 0 0
+exit
+inter g 0/0/1
+ipv6 add 2001:db8:acad:a003::1/64
+ipv6 add fe80::a003:1 link-local
+ospfv3 1 ipv6 area 0
+no shut
+inter lo 0
+ipv6 add 2001:db8:acad:a301::1/64
+ipv6 add fe80::a301:1 link-local
+ospfv3 1 ipv6 area 3
+ipv6 ospf network point-to-point
+no shut
+exit
+router ospfv3 1
+address-family ipv6 unicast
+exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+

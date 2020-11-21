@@ -1,0 +1,83 @@
+
+hostname D1
+no ip domain lookup
+ip routing
+banner motd # This is D1, Trouble Ticket 21.1.2.3 #
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+interface range g1/0/1-24
+ switchport mode access
+ shutdown
+ exit
+interface g1/0/11
+ no switchport
+ ip address 192.0.0.2 255.255.255.0
+ no shutdown
+ exit
+interface vlan 11
+ ip address 209.165.224.1 255.255.255.0
+ no shutdown
+ exit
+interface vlan 12
+ ip address 209.165.225.1 255.255.255.0
+ no shutdown
+ exit
+interface g1/0/23
+ switchport mode access
+ switchport access vlan 11
+ spanning-tree portfast
+ no shutdown
+ exit
+interface g1/0/24
+ switchport mode access
+ switchport access vlan 12
+ spanning-tree portfast
+ no shutdown
+ exit
+router ospf 1
+ router-id 131.131.131.131
+ network 192.0.0.0 0.0.0.255 area 0
+ network 209.165.224.0 0.0.1.255 area 0
+ passive-interface vlan 11
+ passive-interface vlan 12
+ exit
+ip dhcp excluded-address 209.165.224.1 209.165.224.5
+ip dhcp excluded-address 209.165.225.1 209.165.225.5
+ip dhcp pool VLAN11
+ network 209.165.224.0 255.255.255.0
+ default-router 209.165.224.1
+ exit
+ip dhcp pool VLAN12
+ network 209.165.225.0 255.255.255.0
+ default-router 209.165.225.1
+ exit
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ exit
+time-range REMOTE-CONTROL
+ periodic weekdays 00:00 to 01:00
+ periodic weekend 00:00 to 02:00
+ exit
+ip access-list extended VTY-CONTROL
+ permit ip 209.165.224.0 0.0.0.255 any time-range REMOTE-CONTROL
+ deny ip any any log
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exec-timeout 5 0
+ access-class VTY-CONTROL in
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

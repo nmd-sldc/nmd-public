@@ -1,0 +1,62 @@
+
+hostname D1
+no ip domain lookup
+ip routing
+ipv6 unicast-routing
+banner motd # This is D1, Trouble Ticket 17.1.2.2  #
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+interface range g1/0/1-24
+ switchport mode access
+ shutdown
+ exit
+interface g1/0/11
+ no switchport
+ ip address 10.1.11.2 255.255.255.0
+ ipv6 address FE80::11:2 link-local
+ ipv6 address 2001:DB8:ACAD:11::2/64
+ no shutdown
+ exit
+interface loopback 0
+ ip address 209.165.201.1 255.255.255.128
+ ipv6 address fe80::209:1 link-local
+ ipv6 address 2001:db8:209:165:201::1/80
+ no shutdown
+ exit
+router ospfv3 1
+ router-id 11.11.11.11
+ address-family ipv4 unicast
+  passive-interface loopback 0
+  default-information originate
+ address-family ipv6 unicast
+  passive-interface loopback 0
+  default-information originate
+  exit
+ exit
+interface g1/0/11
+ ospfv3 1 ipv6 area 11
+ ospfv3 1 ipv4 area 11
+ exit
+ip route 0.0.0.0 0.0.0.0 loopback 0
+ipv6 route ::/0 loopback 0
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exec-timeout 5 0
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

@@ -1,0 +1,112 @@
+
+hostname D1
+no ip domain lookup
+ip routing
+ipv6 unicast-routing
+banner motd # This is D1, Trouble Ticket 21.1.4.1  #
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ speed 1000
+ negotiation auto
+ no shutdown
+!
+interface range g1/0/1-24
+ switchport mode access
+ shutdown
+ exit
+interface g1/0/11
+ no switchport
+ ip address 192.0.0.2 255.255.255.0
+ ipv6 address fe80::d1:1 link-local
+ ipv6 address 2001:db8:acad:192::2/64
+ no shutdown
+ exit
+interface vlan 11
+ ip address 192.0.11.1 255.255.255.0
+ ipv6 address fe80::d1:2 link-local
+ ipv6 address 2001:db8:acad:224::1/64
+ no shutdown
+ exit
+interface vlan 12
+ ip address 192.0.12.1 255.255.255.0
+ ipv6 address fe80::d1:3 link-local
+ ipv6 address 2001:db8:acad:225::1/64 
+ no shutdown
+ exit
+interface g1/0/23
+ switchport mode access
+ switchport access vlan 11
+ spanning-tree portfast
+ no shutdown
+ exit
+interface g1/0/24
+ switchport mode access
+ switchport access vlan 12
+ spanning-tree portfast
+ no shutdown
+ exit
+router ospfv3 1
+ router-id 0.0.13.1
+ address-family ipv4 unicast
+  passive-interface vlan 11
+  passive-interface vlan 12
+ address-family ipv6 unicast
+  passive-interface vlan 11
+  passive-interface vlan 12
+  exit
+ exit
+interface g1/0/11
+ ospfv3 1 ipv6 area 0
+ ospfv3 1 ipv4 area 0
+ exit
+interface vlan 11
+ ospfv3 1 ipv6 area 0
+ ospfv3 1 ipv4 area 0
+ exit
+interface vlan 12
+ ospfv3 1 ipv6 area 0
+ ospfv3 1 ipv4 area 0
+ exit
+ip dhcp excluded-address 192.0.11.1 192.0.11.5
+ip dhcp excluded-address 192.0.12.1 192.0.12.5
+ip dhcp pool VLAN11DHCP
+ network 192.0.11.0 255.255.255.0
+ default-router 192.0.11.1
+ exit
+ip dhcp pool VLAN12DHCP
+ network 192.0.12.0 255.255.255.0
+ default-router 192.0.12.1
+ exit
+ipv6 dhcp pool VLAN11DHCP6
+ address prefix 2001:db8:acad:224::/64
+ exit
+ipv6 dhcp pool VLAN12DHCP6
+ address prefix 2001:db8:acad:225::/64
+ exit
+interface vlan 11
+ ipv6 nd prefix 2001:db8:acad:224::/64 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server VLAN11DHCP6
+ exit
+interface vlan 12
+ ipv6 nd prefix 2001:db8:acad:225::/64 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server VLAN12DHCP6
+ exit
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exec-timeout 5 0
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

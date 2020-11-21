@@ -1,0 +1,31 @@
+
+hostname R3
+banner motd # This is R3, Trouble Ticket 8.1.2.1 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+no ip domain lookup
+line con 0
+logg sync
+exec-time 0 0
+exit
+inter g 0/0/1
+ip add 10.0.3.1 255.255.255.0
+no shut
+inter lo 0
+ip add 10.3.1.1 255.255.255.0
+ip ospf network point-to-point
+no shut
+router ospf 1
+router-id 3.3.3.3
+network 10.0.3.0 0.0.0.255 area 0
+network 10.3.1.0 0.0.0.255 area 3
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+clear ip ospf process
+yes
+

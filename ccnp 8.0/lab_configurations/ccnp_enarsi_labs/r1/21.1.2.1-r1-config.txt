@@ -1,0 +1,84 @@
+
+hostname R1
+no ip domain lookup
+banner motd # This is R1, Trouble Ticket 21.1.2.1 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+enable secret cisco12345
+username admin privilege 15 algorithm-type scrypt secret cisco12345
+ip access-list extended IPCHECK
+ permit ip 209.165.224.0 0.0.1.255 any
+ permit ip 192.0.0.0 0.0.0.255 any
+ exit
+ip access-list standard BOGON-MARTIAN
+ deny 10.0.0.0 0.255.255.255
+ deny 172.16.0.0 0.31.255.255
+ deny 192.168.0.0 0.0.255.255
+ deny 127.0.0.0 0.255.255.255
+ deny 192.0.0.0 0.0.0.255
+ deny 209.165.224.0 0.0.0.255
+ deny 209.165.225.0 0.0.0.255
+ deny host 209.165.226.1
+ permit any
+ exit
+interface g0/0/1
+ ip address 192.0.0.1 255.255.255.0
+ ip access-group IPCHECK in
+ no shutdown
+ exit
+interface s0/1/0
+ ip address 209.165.200.1 255.255.255.0
+ ip access-group BOGON-MARTIAN in
+ no shutdown
+ exit
+interface s0/1/1
+ ip address 209.165.201.1 255.255.255.0
+ ip access-group BOGON-MARTIAN in
+ no shutdown
+ exit
+interface loopback 0
+ ip address 209.165.226.1 255.255.255.255
+ no shutdown
+ exit
+ip route 209.165.227.1 255.255.255.255 s0/1/0
+ip route 209.165.227.1 255.255.255.255 s0/1/1
+router ospf 1
+ router-id 1.1.1.1
+ network 192.0.0.0 0.0.0.255 area 0
+ default-information originate always
+ exit
+router bgp 181035
+ bgp router-id 209.165.226.1
+neighbor 209.165.227.1 remote-as 39457
+ neighbor 209.165.227.1 update-source loopback 0
+ neighbor 209.165.227.1 ebgp-multihop 3
+ network 209.165.224.0 mask 255.255.255.0
+ network 209.165.225.0 mask 255.255.255.0
+ network 192.0.0.0 mask 255.255.255.0
+ exit
+time-range REMOTE-CONTROL
+ periodic weekdays 05:00 to 23:59
+ periodic weekend 05:00 to 23:59
+ exit
+ip access-list extended VTY-CONTROL
+ permit ip 209.165.224.0 0.0.0.255 any time-range REMOTE-CONTROL
+ deny ip any any log
+ exit
+line con 0
+ logging synchronous
+ exec-timeout 0 0
+ exit
+line vty 0 4
+ login local
+ transport input telnet
+ exec-timeout 5 0
+ access-class VTY-CONTROL in
+ exit
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+

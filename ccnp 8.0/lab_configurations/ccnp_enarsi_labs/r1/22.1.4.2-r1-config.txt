@@ -1,0 +1,111 @@
+
+hostname R1
+banner motd # This is R1, Trouble Ticket 22.1.4.2 #
+username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shut
+!
+boot-start-marker
+boot-end-marker
+vrf definition Mgmt-intf
+ address-family ipv4
+ exit-address-family
+ address-family ipv6
+ exit-address-family
+enable secret cisco12345cisco
+aaa new-model
+username admin privilege 15 algorithm-type scrypt secret cisco1234
+aaa authentication login default local enable
+no ip domain lookup
+ip domain name CCNPv8.CoPP.Lab
+login on-success log
+subscriber templating
+multilink bundle-name authenticated
+spanning-tree extend system-id
+redundancy
+ mode none
+class-map match-all CM-MGMT
+ match access-group name MGMT
+class-map match-all CM-TELNET
+ match access-group name TELNET
+class-map match-all CM-ICMP
+ match access-group name ICMP
+class-map match-all CM-EIGRP
+ match access-group name EIGRP
+class-map match-all CM-SSH
+ match access-group name SSH
+policy-map PM-COPP
+ class CM-EIGRP
+  police rate 10 pps conform-action transmit  exceed-action transmit
+class CM-SSH
+  police rate 10 pps conform-action transmit exceed-action drop
+class CM-TELNET
+  police 8000 conform-action drop  exceed-action drop
+ class CM-MGMT
+  police 8000 conform-action transmit exceed-action transmit
+  class CM-ICMP
+  police rate 10 pps conform-action transmit exceed-action drop
+ class class-default
+  police 12000 conform-action transmit  exceed-action transmit
+interface GigabitEthernet0/0/0
+ ip address 172.16.12.1 255.255.255.252
+ negotiation auto
+ no shutdown
+interface GigabitEthernet0/0/1
+ ip address 10.10.1.1 255.255.255.0
+ negotiation auto
+ no shutdown
+router eigrp 123
+ network 10.10.1.0 0.0.0.255
+ network 172.16.12.0 0.0.0.3
+ eigrp router-id 0.0.0.1
+ip forward-protocol nd
+no ip http server
+ip http secure-server
+ip tftp source-interface GigabitEthernet0/0/0
+ip access-list extended EIGRP
+ permit eigrp any any
+ip access-list extended ICMP
+ permit icmp any any echo
+ permit icmp any any echo-reply
+ permit icmp any any ttl-exceeded
+ permit icmp any any packet-too-big
+ permit icmp any any port-unreachable
+ permit icmp any any unreachable
+ip access-list extended MGMT
+ permit tcp any eq telnet any established
+ permit tcp 10.10.1.0 0.0.0.255 any eq 22
+ permit tcp 10.10.1.0 0.0.0.255 eq 22 any established
+ permit udp 10.10.1.0 0.0.0.255 any eq snmp
+ permit tcp 10.10.1.0 0.0.0.255 any eq www
+permit udp 10.10.1.0 0.0.0.255 any eq 443
+ permit tcp 10.10.1.0 0.0.0.255 any eq ftp
+ permit tcp 10.10.1.0 0.0.0.255 any eq ftp-data
+ permit tcp 10.10.1.0 0.0.0.255 any
+ permit udp any any eq syslog
+ permit udp any eq domain any
+ permit udp any any eq ntp
+ip access-list extended SSH
+ permit tcp any any eq 22
+ permit tcp any eq 22 any established
+ip access-list extended TELNET
+ permit tcp any any eq telnet
+control-plane
+ service-policy input PM-COPP
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ transport input none
+ stopbits 1
+line aux 0
+ stopbits 1
+line vty 0 4
+transport input telnet ssh
+exit 
+crypto key generate rsa modulus 1024
+alias exec reset.now tclsh flash:/enarsi/reset.tbc
+end
+
