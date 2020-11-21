@@ -1,5 +1,6 @@
 
 hostname R3
+banner motd # This is R3, Trouble Ticket 15.1.4.3 #
 no ip domain lookup
 line con 0
  logging sync

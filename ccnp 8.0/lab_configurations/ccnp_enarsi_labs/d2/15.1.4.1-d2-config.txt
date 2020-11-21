@@ -1,5 +1,6 @@
 
 hostname D2
+banner motd # This is D2, Trouble Ticket 15.1.4.1 #
 no ip domain lookup
 line con 0
 logging sync
