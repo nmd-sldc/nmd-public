@@ -5,7 +5,7 @@ line con 0
 exec-timeout 0 0
 logging synchronous
 exit
-banner motd # This is D1, Troubleshoot Route Maps and PBR #
+banner motd # This is D1, Trouble Ticket 15.1.4.3 #
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 !
 interface GigabitEthernet0/0

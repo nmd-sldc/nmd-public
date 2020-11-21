@@ -5,6 +5,7 @@ no service password-encryption
 hostname A1
 boot-start-marker
 boot-end-marker
+banner motd # This is A1, Trouble Ticket 22.1.4.2 #
 enable secret cisco12345cisco
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 username admin privilege 15 algorithm-type scrypt secret cisco1234

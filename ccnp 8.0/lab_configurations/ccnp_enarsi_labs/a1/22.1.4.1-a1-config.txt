@@ -2,6 +2,7 @@
 service timestamps debug datetime msec
 service timestamps log datetime msec
 no service password-encryption
+banner motd # This is A1, Trouble Ticket 22.1.4.1 #
 hostname A1
 boot-start-marker
 boot-end-marker
