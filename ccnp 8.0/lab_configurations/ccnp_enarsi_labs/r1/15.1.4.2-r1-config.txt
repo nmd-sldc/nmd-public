@@ -7,6 +7,7 @@ line con 0
  exec-time 0 0
  exit
 banner motd # This is R1, Troubleshoot Route Maps and PBR #
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 !
 interface GigabitEthernet0
@@ -45,7 +46,8 @@ set ip default next-hop 172.16.2.2
 exit
 interface g0/0/1
 ip policy route-map R1-to-R3
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 end
 clear ip ospf process
 yes

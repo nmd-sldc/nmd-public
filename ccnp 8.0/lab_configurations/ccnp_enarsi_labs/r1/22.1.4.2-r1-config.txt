@@ -1,7 +1,8 @@
 
 hostname R1
 banner motd # This is R1, Trouble Ticket 22.1.4.2 #
-username instructor privilege 15 secret 9 $YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 !
 interface GigabitEthernet0
  vrf forwarding Mgmt-intf
@@ -106,6 +107,7 @@ line vty 0 4
 transport input telnet ssh
 exit 
 crypto key generate rsa modulus 1024
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 end
 

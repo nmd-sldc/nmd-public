@@ -3,6 +3,7 @@ hostname R1
 banner motd # This is R1, Trouble Ticket 1.1.2.3 #
 enable secret cisco12345
 username admin privilege 15 algorithm-type scrypt secret cisco12345
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 !
 interface GigabitEthernet0
@@ -41,6 +42,7 @@ line vty 0 4
  login local
  transport input telnet
  exit
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 end
 

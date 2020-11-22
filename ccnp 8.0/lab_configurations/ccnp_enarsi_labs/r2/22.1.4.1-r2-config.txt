@@ -3,6 +3,7 @@ service timestamps debug datetime msec
 service timestamps log datetime msec
 hostname R2
 banner motd #This is R2, Trouble Ticket 22.1.4.1 #
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 !
 interface GigabitEthernet0
@@ -42,6 +43,7 @@ line aux 0
 line vty 0 4
 transport input telnet ssh
 exit
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 end
 

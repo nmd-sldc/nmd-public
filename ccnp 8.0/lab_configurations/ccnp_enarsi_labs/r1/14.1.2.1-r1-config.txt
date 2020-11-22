@@ -1,6 +1,7 @@
 
 hostname R1
 banner motd # This is R1, Trouble Ticket 14.1.2.1 #
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 !
 interface GigabitEthernet0
@@ -76,5 +77,6 @@ neighbor 2001:db8:cab:f001::1 activate
 neighbor 2001:db8:c0c0:99::2 activate
 neighbor 2001:db8:c0c0:99::2 next-hop-self
 neighbor 2001:db8:c0c0:99::3 activate
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 

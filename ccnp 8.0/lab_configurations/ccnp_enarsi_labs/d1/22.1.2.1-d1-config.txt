@@ -3,6 +3,7 @@ hostname D1
 no ip domain lookup
 enable secret cisco12345cisco
 banner motd # D1, Trouble Ticket 22.1.2.1 #
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 !
 interface GigabitEthernet0/0
@@ -39,6 +40,7 @@ interface range g1/0/5-6
 interface range g1/0/1-4, g1/0/7-10, g1/0/12-22, g1/0/24
  shutdown
  exit
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 end
 

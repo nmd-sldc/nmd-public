@@ -7,6 +7,7 @@ hostname A1
 boot-start-marker
 boot-end-marker
 enable secret cisco12345cisco
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 username admin privilege 15 algorithm-type scrypt secret cisco1234
 no aaa new-model
@@ -21,54 +22,54 @@ interface FastEthernet0
  ip address 10.136.abracadabra 255.255.255.0
  no shutdown
 !
-interface FastEthernet0/1
+interface GigabitEthernet1/0/1
 shutdown
-interface FastEthernet0/2
+interface GigabitEthernet1/0/2
  shutdown
-interface FastEthernet0/3
+interface GigabitEthernet1/0/3
  shutdown
-interface FastEthernet0/4
+interface GigabitEthernet1/0/4
  shutdown
-interface FastEthernet0/5
+interface GigabitEthernet1/0/5
  shutdown
-interface FastEthernet0/6
+interface GigabitEthernet1/0/6
  shutdown
-interface FastEthernet0/7
+interface GigabitEthernet1/0/7
  shutdown
-interface FastEthernet0/8
+interface GigabitEthernet1/0/8
  shutdown
-interface FastEthernet0/9
+interface GigabitEthernet1/0/9
  shutdown
-interface FastEthernet0/10
+interface GigabitEthernet1/0/10
  shutdown
-interface FastEthernet0/11
+interface GigabitEthernet1/0/11
  no shutdown
-interface FastEthernet0/12
+interface GigabitEthernet1/0/12
  shutdown
-interface FastEthernet0/13
+interface GigabitEthernet1/0/13
  shutdown
-interface FastEthernet0/14
+interface GigabitEthernet1/0/14
  shutdown
-interface FastEthernet0/15
+interface GigabitEthernet1/0/15
  shutdown
-interface FastEthernet0/16
+interface GigabitEthernet1/0/16
  shutdown
-interface FastEthernet0/17
+interface GigabitEthernet1/0/17
  shutdown
-interface FastEthernet0/18
+interface GigabitEthernet1/0/18
  shutdown
-interface FastEthernet0/19
+interface GigabitEthernet1/0/19
  shutdown
-interface FastEthernet0/20
+interface GigabitEthernet1/0/20
  shutdown
-interface FastEthernet0/21
+interface GigabitEthernet1/0/21
  shutdown
-interface FastEthernet0/22
+interface GigabitEthernet1/0/22
  shutdown
-interface FastEthernet0/23
+interface GigabitEthernet1/0/23
  switchport mode access
  no shutdown
-interface FastEthernet0/24
+interface GigabitEthernet1/0/24
  shutdown
 interface GigabitEthernet0/1
  shutdown
@@ -88,6 +89,7 @@ transport input telnet ssh
 line vty 5 15
 transport input telnet ssh
 exit
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 end
 

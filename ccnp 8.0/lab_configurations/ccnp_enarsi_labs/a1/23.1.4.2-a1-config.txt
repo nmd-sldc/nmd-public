@@ -3,6 +3,7 @@ no ip domain lookup
 banner motd # This is A1, Trouble Ticket 23.1.4.2 #
 ip domain name ENCOR.23
 enable algorithm-type scrypt secret cisco12345
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 username admin privilege 15 algorithm-type scrypt secret cisco12345
 !
@@ -14,7 +15,7 @@ ip access-list standard VTY-CONTROL
  permit 172.16.0.0 0.0.255.255
  deny any log
  exit
-interface range g1/0/1-24
+interface range g1/0/1-28
  switchport mode access
  shutdown
  exit
@@ -64,5 +65,6 @@ line vty 0 4
  access-class VTY-CONTROL in
  exec-timeout 0 0
  exit
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 end

@@ -5,6 +5,7 @@ enable secret cisco12345cisco
 banner motd # D1, Trouble Ticket 22.1.2.2 #
 username admin algorithm-type scrypt secret cisco1234 
 username localuser algorithm-type scrypt secret letmein
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
 username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
 !
 interface GigabitEthernet0/0
@@ -52,6 +53,7 @@ line vty 0 4
 login authentication RAD-AUTH
 transport input Telnet
 exit
-alias exec reset.now tclsh flash:/enarsi/reset.tbc
+alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
 end
 
