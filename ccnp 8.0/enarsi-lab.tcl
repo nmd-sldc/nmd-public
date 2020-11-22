@@ -126,7 +126,7 @@ proc next_ticket {} {
   } else {
 
     #Extract hostname from current motd banner
-    set current_device_name [regex -inline -nocase {[a-z]*\d} $current_hostname_string]
+    set current_device_name [regex -inline -nocase {[a-z]*\d} $current_banner_string]
     set current_device_name [string tolower $current_device_name]
     
     #Extract lab number from current motd banner
@@ -168,7 +168,7 @@ proc previous_ticket {} {
   } else {
 
     #Extract hostname from current motd banner
-    set current_device_name [regex -nocase -inline {[a-z]*\d} $current_hostname_string]
+    set current_device_name [regex -nocase -inline {[a-z]*\d} $current_banner_string]
     set current_device_name [string tolower $current_device_name]
     
     #Extract lab number from current motd banner
