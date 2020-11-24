@@ -5,12 +5,12 @@
 
 
 # Initialize variables globally to simplify proc variable declaration
-set version_number "1.1"
+set version_number "1.2"
 set device_type "Unknown"
 set device_name "Unknown"
 set lab_number "Unknown"
 set ticket_letter "Unknown"
-set config_directory "flash:/ccnp/enarsi/"
+set config_directory "flash:/ccnp/enarsi"
 set config_filename "Unknown"
 set config_fq_filename "Unknown"
 set file_ops "Unknown"
@@ -63,6 +63,7 @@ proc show_syntax {} {
   puts "ALT SYNTAX: tclsh $script_filename {next|previous}"
   puts "***Only the optional filename parameter is case sensitive***"
   puts "EXAMPLES:"
+  puts "      enarsi.lab r1 x.x.x.x"
   puts "      tclsh $script_filename r1 x.x.x.x"
   puts "      tclsh $script_filename next"
   puts "      tclsh $script_filename previous"
@@ -126,16 +127,14 @@ proc next_ticket {} {
   } else {
 
     #Extract hostname from current motd banner
-    set current_device_name [regex -nocase {[a-z]*\d} $current_banner_string]
+    set current_device_name [regexp -nocase {[a-z]*\d} $current_banner_string]
     set current_device_name [string tolower $current_device_name]
     
     #Extract lab number from current motd banner
-    set current_lab_number [regex {\d*[.]\d} $current_banner_string]
+    set current_lab_number [regexp {\d*[.]\d} $current_banner_string]
     
     #Increment Lab number by 1
-    #
-    incr $current_lab_number
-    
+    incr $current_lab_number 
 
     puts "***************************"
     puts "Detected Parameters:"
@@ -168,17 +167,14 @@ proc previous_ticket {} {
   } else {
 
     #Extract hostname from current motd banner
-    set current_device_name [regex -nocase {[a-z]*\d} $current_banner_string]
+    set current_device_name [regexp -nocase {[a-z]*\d} $current_banner_string]
     set current_device_name [string tolower $current_device_name]
     
     #Extract lab number from current motd banner
-    set current_lab_number [regex {\d*[.]\d} $current_banner_string]
+    set current_lab_number [regexp {\d*[.]\d} $current_banner_string]
     
     #Decremenent Lab number by 1
     set current_lab_number $current_lab_number - 1
-    
-    #Extract lab number from current motd banner
-    set current_lab_number [regex current_banner_string]
 
     puts "***************************"
     puts "Detected Parameters:"
@@ -224,80 +220,75 @@ proc configure_device {} {
   if {[file exists $config_fq_filename]==1} {
     switch $device_type {
       "AccessSwitch" {
-		get_ip
-        puts "Initializing as access switch..."
-        typeahead "\n"
-        delete /force vlan.dat
-        delete /force multiple-fs
-        ios_config "sdm prefer lanbase-routing"
-        puts "Applying  $config_fq_filename to startup-config"
-		set file_ops [open "$config_fq_filename" r]
-		set file_data [read $file_ops]
-		close $file_ops
-		regsub "abracadabra" $file_data "$device_mgmt_ip" file_data
-		set temp_file [open "flash:/temp_file.cfg" w+]
-		puts $temp_file $file_data
-		close $temp_file
-        exec "copy flash:/temp_file.cfg startup-config"
-        puts "\r\n"
-		puts "\r"
-		typeahead "\r\n"
-		exec "delete flash:/temp_file.cfg"
-		puts "\r"
-		puts "\r"
-        puts "Reloading the switch in 1 minute, type 'reload cancel' to halt"
-        typeahead "\r\n"
-		reload in 1
+      		get_ip
+          puts "Initializing as access switch..."
+          typeahead "\n"
+          delete /force vlan.dat
+          delete /force multiple-fs
+          ios_config "sdm prefer lanbase-routing"
+          puts "Applying  $config_fq_filename to startup-config"
+      		set file_ops [open "$config_fq_filename" r]
+      		set file_data [read $file_ops]
+      		close $file_ops
+      		regsub "abracadabra" $file_data "$device_mgmt_ip" file_data
+      		set temp_file [open "flash:/temp_file.cfg" w+]
+      		puts $temp_file $file_data
+      		close $temp_file
+          exec "copy flash:/temp_file.cfg startup-config"
+          puts "\r\n"
+      		puts "\r"
+      		typeahead "\r\n"; exec "delete flash:/temp_file.cfg"
+      		puts "\r"
+      		puts "\r"
+          puts "\nReloading the switch in 1 minute, type 'reload cancel' to halt"
+          typeahead "\r\n"; exec "reload in 1"
       }
       "DistroSwitch" {
-		get_ip
-		puts "$device_mgmt_ip"
-        puts "Initializing as distribution switch..."
-        typeahead "\n"
-        delete /force vlan.dat
-        delete /force multiple-fs
-        ios_config "sdm prefer advanced"
-        puts "Applying  $config_fq_filename to startup-config"
-		set file_ops [open "$config_fq_filename" r]
-		set file_data [read $file_ops]
-		close $file_ops
-		regsub "abracadabra" $file_data "$device_mgmt_ip" file_data
-		set temp_file [open "flash:/temp_file.cfg" w+]
-		puts $temp_file $file_data
-		close $temp_file
-        exec "copy flash:/temp_file.cfg startup-config"
-        puts "\r\n"
-		puts "\r"
-		typeahead "\r\n"
-		exec "delete flash:/temp_file.cfg"
-		puts "\r"
-		puts "\r"
-        puts "Reloading the switch in 1 minute, type 'reload cancel' to halt"
-        typeahead "\r\n"
-		reload in 1
+		      get_ip
+		      puts "$device_mgmt_ip"
+          puts "Initializing as distribution switch..."
+          typeahead "\n"
+          delete /force vlan.dat
+          delete /force multiple-fs
+          ios_config "sdm prefer advanced"
+          puts "Applying  $config_fq_filename to startup-config"
+      		set file_ops [open "$config_fq_filename" r]
+      		set file_data [read $file_ops]
+      		close $file_ops
+      		regsub "abracadabra" $file_data "$device_mgmt_ip" file_data
+      		set temp_file [open "flash:/temp_file.cfg" w+]
+      		puts $temp_file $file_data
+      		close $temp_file
+          exec "copy flash:/temp_file.cfg startup-config"
+          puts "\r\n"
+      		puts "\r"
+      		typeahead "\r\n"; exec "delete flash:/temp_file.cfg"
+      		puts "\r"
+      		puts "\r"
+          puts "\nReloading the switch in 1 minute, type 'reload cancel' to halt"
+          typeahead "\r\n"; exec "reload in 1"
       } 
       "Router" {
-		get_ip
-        puts "Initializing router..."
-        puts "Applying  $config_fq_filename to startup-config"
-		set file_ops [open "$config_fq_filename" r]
-		set file_data [read $file_ops]
-		close $file_ops
-		regsub "abracadabra" $file_data "$device_mgmt_ip" file_data
-		set temp_file [open "flash:/temp_file.cfg" w+]
-		puts $temp_file $file_data
-		close $temp_file
-        exec "copy flash:/temp_file.cfg startup-config"
-        puts "\r\n"
-		puts "\r"
-		typeahead "\r\n"
-		exec "delete flash:/temp_file.cfg"
-		puts "\r"
-		puts "\r"
-        puts "Reloading the router in 1 minute, type 'reload cancel' to halt"
-        typeahead "\r\n"
-        reload in 1
+		      get_ip
+          puts "Initializing router..."
+          puts "Applying  $config_fq_filename to startup-config"
+        	set file_ops [open "$config_fq_filename" r]
+        	set file_data [read $file_ops]
+        	close $file_ops
+        	regsub "abracadabra" $file_data "$device_mgmt_ip" file_data
+        	set temp_file [open "flash:/temp_file.cfg" w+]
+        	puts $temp_file $file_data
+        	close $temp_file
+          exec "copy flash:/temp_file.cfg startup-config"
+          puts "\r\n"
+        	puts "\r"
+        	typeahead "\r\n"; exec "delete flash:/temp_file.cfg"
+        	puts "\r"
+        	puts "\r"
+          puts "\nReloading the router in 1 minute, type 'reload cancel' to halt"
+          typeahead "\r\n"; exec "reload in 1"
       }
+      
       default {puts "No initialization performed, device type not recognized"}
     }
   } else { 
