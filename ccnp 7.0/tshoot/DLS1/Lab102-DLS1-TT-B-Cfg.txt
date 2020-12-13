@@ -1,0 +1,619 @@
+version 16.6
+!LAB 10-2 Switch DLS1 TT-B Config
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname DLS1
+!
+!
+enable secret cisco
+!
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+
+aaa new-model
+!         
+!
+aaa authentication login default local
+aaa authentication login CONSOLE none
+aaa authorization exec default local 
+!
+!
+clock timezone PST -8
+clock summer-time PDT recurring
+do clock set 09:05:00 Oct 29 2014
+!
+vtp domain TSHOOT
+vtp mode transparent
+vtp version 3
+ip routing
+no ip domain-lookup
+ip domain-name tshoot.net
+!
+!
+ip dhcp excluded-address 10.1.110.1 10.1.110.5
+ip dhcp excluded-address 10.1.120.1 10.1.120.5
+ip dhcp excluded-address 10.1.200.1 10.1.200.5
+ip dhcp excluded-address 10.1.120.129 10.1.120.254
+ip dhcp excluded-address 10.1.110.129 10.1.110.254
+ip dhcp excluded-address 10.1.200.129 10.1.200.254
+!
+ip dhcp pool GUEST
+ network 10.1.110.0 255.255.255.0
+ default-router 10.1.110.254 
+!
+ip dhcp pool OFFICE
+ network 10.1.120.0 255.255.255.0
+ default-router 10.1.120.254
+ domain-name tshoot.net
+!
+ip dhcp pool VOICE
+ network 10.1.200.0 255.255.255.0
+ default-router 10.1.200.254 
+!
+ipv6 unicast-routing
+!
+ipv6 dhcp pool DHCPv6GUEST
+ address prefix 2001:DB8:CAFE:110:ABCD::/80
+ domain-name tshoot.net
+!
+ipv6 dhcp pool DHCPv6OFFICE
+ address prefix 2001:DB8:CAFE:120:ABCD::/80
+ domain-name tshoot.net
+!
+ipv6 dhcp pool DHCPv6VOICE
+ address prefix 2001:DB8:CAFE:200:ABCD::/80
+ domain-name tshoot.net
+!
+errdisable recovery cause bpduguard
+!
+!
+vlan 99
+ name MANAGEMENT
+!
+vlan 100
+ name SERVERS
+!
+vlan 110
+ name GUEST
+!
+vlan 120  
+ name OFFICE
+!
+vlan 200
+ name VOICE
+!
+vlan 300
+ name O-PEER
+!
+vlan 666
+ name NATIVE
+!
+vlan 999
+ name PARKING_LOT
+!
+spanning-tree mode mst
+spanning-tree portfast default
+!
+spanning-tree mst configuration
+ name TSHOOT
+ revision 25
+ instance 1 vlan 99, 110, 120
+ instance 2 vlan 100, 200, 300
+!
+spanning-tree mst 1 priority 24576
+spanning-tree mst 2 priority 28672
+!
+vtp mode server
+vtp mode server mst
+vtp password cisco hidden
+!
+track 7 ip sla 2
+ delay down 30 up 30
+!
+track 23 list boolean and
+ object 7
+ object 31
+!
+track 31 interface GigabitEthernet1/0/5 line-protocol
+ delay down 30 up 30
+!
+lldp run
+! 
+ip telnet source-interface Vlan99
+ip ssh source-interface Vlan99
+ip ssh dh min size 2048
+!
+interface Loopback0
+ description Anchor
+ ip address 10.1.211.1 255.255.255.255
+ ip ospf network point-to-point
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:2110::D1/128
+ ipv6 rip V120 enable
+ ipv6 ospf network point-to-point
+ ipv6 ospf 1 area 0
+!
+interface Port-channel1
+ description Channel to ALS1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ no shutdown
+!
+interface Port-channel10
+ description Channel to DLS2
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ no shutdown
+!
+interface Tunnel0
+ no ip address
+ ipv6 address FE80::D1 link-local
+ ipv6 address FC00::D1/7
+ ipv6 rip V120 enable
+ tunnel source GigabitEthernet1/0/5
+ tunnel destination 209.165.200.230
+!
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shutdown
+ !0
+ negotiation auto
+!
+interface GigabitEthernet1/0/1
+ description Channel to ALS1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ channel-group 1 mode on
+ no shutdown
+!
+interface GigabitEthernet1/0/2
+ description Channel to ALS1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ channel-group 1 mode on
+ no shutdown
+!
+interface GigabitEthernet1/0/3
+ description Channel to DLS2
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ channel-group 10 mode on
+ no shutdown
+!
+interface GigabitEthernet1/0/4
+ description Channel to DLS2
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ channel-group 10 mode on
+ no shutdown
+!
+interface GigabitEthernet1/0/5
+ description FE to R1
+ no switchport
+ ip address 10.1.2.1 255.255.255.252
+ ip access-group 101 in
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:20::D1/64
+ ipv6 ospf 1 area 0
+ !
+ !
+ spanning-tree bpduguard enable
+ no shutdown
+!
+interface GigabitEthernet1/0/6
+ description FE to SRV1
+ switchport access vlan 100
+ switchport mode access
+ switchport nonegotiate
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet1/0/7
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/8
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/9
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/10
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/11
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/12
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!         
+interface GigabitEthernet1/0/13
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/14
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/15
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/16
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/17
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/18
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/19
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/20
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/21
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/22
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown 
+!
+interface GigabitEthernet1/0/23
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/24
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+!
+interface GigabitEthernet1/1/1
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/1/2
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/1/3
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/1/4
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+!
+no logging console
+no logging monitor
+no logging buffered
+no logging exception
+no logging trap
+!
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+interface Vlan99
+ ip address 10.1.99.252 255.255.255.0
+ no ip proxy-arp
+ standby 99 ip 10.1.99.254
+ standby 99 priority 110
+ standby 99 preempt
+ standby 99 track 23 decrement 20
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:99::D1/64
+ ipv6 rip V120 enable
+ ipv6 ospf 1 area 1
+ no shutdown
+!
+interface Vlan100
+ ip address 10.1.100.252 255.255.255.0
+ no ip proxy-arp
+ standby 100 ip 10.1.100.254
+ standby 100 preempt
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:100::D1/64
+ ipv6 rip V120 enable
+ ipv6 ospf 1 area 1
+ no shutdown
+!
+interface Vlan110
+ ip address 10.1.110.252 255.255.255.0
+ no ip proxy-arp
+ standby 110 ip 10.1.110.254
+ standby 110 priority 110
+ standby 110 preempt
+ standby 110 track 23 decrement 20
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:110::D1/64
+ ipv6 ospf 1 area 1
+ ipv6 rip V120 enable
+ ipv6 nd prefix 2001:DB8:CAFE:110::/64 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server DHCPv6GUEST
+ no shutdown
+!
+interface Vlan120
+ ip address 10.1.120.252 255.255.255.0
+ no ip proxy-arp
+ standby 120 ip 10.1.120.254
+ standby 120 priority 110
+ standby 120 preempt
+ standby 120 track 23 decrement 20
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:120::D1/64
+ ipv6 ospf 1 area 1
+ ipv6 rip V120 enable
+ ipv6 nd prefix 2001:DB8:CAFE:120::/64 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server DHCPv6OFFICE
+ no shutdown
+!
+interface Vlan200
+ ip address 10.1.200.252 255.255.255.0
+ no ip proxy-arp
+ standby 200 ip 10.1.200.254
+ standby 200 preempt
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:200::D1/64
+ ipv6 ospf 1 area 1
+ ipv6 nd prefix 2001:DB8:CAFE:200::/64 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server DHCPv6VOICE
+ no shutdown
+!
+interface Vlan300
+ ip address 10.1.30.252 255.255.255.0
+ no ip proxy-arp
+ standby 30 ip 10.1.30.254
+ standby 30 preempt
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 sheaf
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:300::D1/64
+ ipv6 ospf 1 area 0
+ ipv6 ospf authentication ipsec spi 500 sha1 1234567890123456789012345678901234567890
+!    
+router ospf 1
+ router-id 1.1.1.1
+ log-adjacency-changes
+ passive-interface default
+ no passive-interface Vlan300
+ no passive-interface GigabitEthernet1/0/5
+ network 10.1.99.0 0.0.0.255 area 1
+ network 10.1.100.0 0.0.0.255 area 1
+ network 10.1.110.0 0.0.0.255 area 1
+ network 10.1.120.0 0.0.0.255 area 1
+ network 10.1.200.0 0.0.0.255 area 1
+ network 10.1.30.0 0.0.0.255 area 0
+ network 10.1.2.0 0.0.0.3 area 0
+ network 10.1.211.1 0.0.0.0 area 0
+!
+router rip
+ version 2
+ network 10.0.0.0
+ no auto-summary
+!
+no ip http server
+no ip http secure-server
+!
+ip sla 2
+ tcp-connect 2001:DB8:FEED:10::1 22 control disable
+ threshold 100
+ timeout 200
+ frequency 6
+ip sla schedule 2 life forever start-time now  
+!
+!
+access-list 101 permit tcp host 192.168.1.1 host 192.168.3.1 eq bgp
+access-list 101 permit tcp host 192.168.1.1 eq bgp host 192.168.3.1
+access-list 101 permit ospf any any
+access-list 101 permit icmp any any
+access-list 101 permit udp any any
+access-list 101 permit ip host 10.1.2.2 any
+access-list 101 permit ip host 192.168.1.1 any
+access-list 101 permit gre any any
+!
+ipv6 router ospf 1
+ router-id 11.11.11.11
+ passive-interface default
+ no passive-interface Vlan300
+ no passive-interface GigabitEthernet1/0/5
+!
+ipv6 router rip V120
+ distribute-list prefix-list RIP in
+ distribute-list prefix-list RIP out Tunnel0
+!
+!
+ipv6 prefix-list RIP seq 10 deny 2001:DB8:CAFE:100::/58 ge 59
+ipv6 prefix-list RIP seq 20 permit ::/0 le 128
+!
+!
+snmp-server community cisco RO
+snmp-server community san-fran RW
+snmp-server trap-source Vlan99
+snmp-server location TSHOOT Lab Facility
+snmp-server contact support@tshoot.net
+snmp-server enable traps eigrp
+snmp-server enable traps vtp
+snmp-server enable traps vlancreate
+snmp-server enable traps vlandelete
+snmp-server enable traps port-security
+snmp-server enable traps config
+snmp-server enable traps hsrp
+snmp-server enable traps vlan-membership
+snmp-server enable traps errdisable
+snmp-server host 10.1.100.1 version 2c cisco 
+!
+!
+banner motd ^*** Lab 10-2 Switch DLS1 TT-B Config ***^
+!
+alias exec srb show run | begin router bgp
+alias exec sro show run | begin router ospf
+alias exec srr show run | b router rip
+alias exec sre show run | begin router eigrp
+alias exec srr6 show run | b ipv6 router rip
+alias exec sra show run | section event manager
+alias exec srig show run inter f0/0
+alias exec sira show ip route vrf VPN_A
+alias exec sirb show ip route vrf VPN_B
+alias exec sir show ip route
+alias exec six show ipv6 route
+alias exec sixa show ipv6 route vrf VPN_A
+alias exec sixb show ipv6 route vrf VPN_B
+alias exec ssm show spanning-tree mst
+alias exec ssm1 show spanning-tree mst 1
+alias exec ssm2 show spanning-tree mst 2
+alias exec ssmc show spanning-tree mst config
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ login authentication CONSOLE
+line vty 0 15
+ exec-timeout 0 0
+ logging synchronous
+ transport input ssh
+!
+ntp source Vlan99
+ntp server 2.2.2.2
+!
+event manager applet DLS2-MST1-Root
+ event syslog pattern "23 list boolean and Up -> Down"
+ action 1.0 cli command "enable"
+ action 1.1 cli command "conf t"
+ action 1.2 cli command "spanning-tree mst 1 priority 32768"
+ action 1.3 syslog msg "DLS2 Root for MST1"
+event manager applet DLS1-MST1-Root
+ event syslog pattern "23 list boolean and Down -> Up"
+ action 1.0 cli command "enable"
+ action 1.1 cli command "conf t"
+ action 1.2 cli command "spanning-tree mst 1 priority 24576"
+ action 1.3 syslog msg "DLS1 Root for MST1"
+!
+event manager applet CreateSSHkeys
+ event timer countdown time 120
+ action 1.0 cli command "enable"
+ action 1.5 cli command "conf t"
+ action 2.0 cli command "crypto key generate rsa modulus 1024"
+!
+crypto key gen rsa general-keys modulus 1024
+!
+archive
+ log config
+  logging enable
+  logging size 50
+  notify syslog contenttype plaintext
+  hidekeys
+ path tftp://10.1.100.1/$h-archive-config
+ write-memory
+file prompt quiet
+!
+end
+!

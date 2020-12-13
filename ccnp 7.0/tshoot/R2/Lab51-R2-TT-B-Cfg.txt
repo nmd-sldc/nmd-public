@@ -1,0 +1,174 @@
+version 16.6
+!LAB 5-1 Router R2 TT-B Config
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname R2
+!
+logging buffered 16384
+enable secret cisco
+!
+aaa new-model
+!
+!
+aaa authentication login default local
+aaa authentication login CONSOLE none
+aaa authorization exec default local 
+!
+!
+clock timezone PST -8
+clock summer-time PDT recurring
+!
+!
+no ip domain lookup
+ip domain name tshoot.net
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+
+!
+!
+ip telnet source-interface Loopback0
+ip ssh source-interface Loopback0
+ip ssh dh min size 2048
+! 
+!
+interface Loopback0
+ ip address 10.1.202.1 255.255.255.255
+ ipv6 address FE80::2 link-local
+ ipv6 address 2001:DB8:CAFE:202::2/64
+!
+interface Loopback1
+ ip address 2.2.2.2 255.0.0.0
+ ipv6 address FE80::2 link-local
+ ipv6 address 2001:DB8:EFAC::2/48
+!
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shutdown
+!
+interface GigabitEthernet0/0/0
+ no ip address
+ shutdown
+ !
+ !
+!
+interface GigabitEthernet0/0/1
+ description optional connection for PC-C w/ static address 
+ no ip address
+ shutdown
+ !
+ !
+!
+interface Serial0/1/0
+ description WAN link to R1: 2 Mbps leased line 
+ ip address 10.1.1.2 255.255.255.252
+ ip flow ingress
+ encapsulation ppp
+ ipv6 address FE80::2 link-local
+ ipv6 address 2001:DB8:CAFE:10::2/64
+ no shutdown
+!
+interface Serial0/1/1
+ description WAN link to R3: 2 Mbps leased line
+ ip address 10.1.1.6 255.255.255.252
+ ip flow ingress
+ encapsulation ppp
+ ipv6 address FE80::2 link-local
+ ipv6 address 2001:DB8:CAFE:14::2/64
+ clock rate 2000000
+ no shutdown
+!
+!         
+router eigrp HQ
+ !
+ address-family ipv4 unicast autonomous-system 1
+  !
+  af-interface GigabitEthernet0/0/0
+   passive-interface
+  exit-af-interface
+  !
+  af-interface GigabitEthernet0/0/1
+   passive-interface
+  exit-af-interface
+  !
+  af-interface Loopback0
+   passive-interface
+  exit-af-interface
+  !
+  af-interface Loopback1
+   passive-interface
+  exit-af-interface
+  !
+  topology base
+  exit-af-topology
+  network 0.0.0.0
+ exit-address-family
+ !
+ address-family ipv6 unicast autonomous-system 1
+  !       
+  topology base
+  exit-af-topology
+ exit-address-family
+!
+!
+crypto key gen rsa general-keys modulus 1024
+!
+ip http server
+ip http secure-server
+ip flow-top-talkers
+ top 3
+ sort-by bytes
+ cache-timeout 600000
+!
+!
+logging source-interface Loopback0
+!
+!
+snmp-server community cisco RO
+snmp-server community san-fran RW
+snmp-server trap-source Loopback0
+snmp-server location TSHOOT Lab Facility
+snmp-server contact support@tshoot.net
+snmp-server enable traps eigrp
+snmp-server enable traps flash insertion
+snmp-server enable traps flash removal
+snmp-server enable traps config
+snmp-server enable traps cpu threshold
+snmp-server host 10.1.100.5 version 2c cisco 
+!
+!
+banner motd ^*** Lab 5-1 Router R2 TT-B Config ***^
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ login authentication CONSOLE
+!
+line vty 0 4
+ exec-timeout 0 0
+ logging synchronous
+ transport input telnet ssh
+!
+ntp master 3
+!
+!
+archive
+ log config
+  logging size 50
+  notify syslog contenttype plaintext
+  hidekeys
+ path tftp://10.1.100.5/$h-archive-config
+ write-memory
+file prompt quiet
+!
+end
+!

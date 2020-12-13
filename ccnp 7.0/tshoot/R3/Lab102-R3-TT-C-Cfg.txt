@@ -1,0 +1,401 @@
+version 16.6
+!LAB 10-2 Router R3 TT-C Config
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname R3
+!
+!
+enable secret cisco
+!
+aaa new-model
+!
+!
+aaa authentication login default local
+aaa authentication login CONSOLE none
+aaa authorization exec default local 
+!
+!
+clock timezone PST -8
+clock summer-time PDT recurring
+do clock set 09:05:00 Oct 29 2014
+!
+!
+no ip domain lookup
+ip domain name tshoot.net
+ip cef
+!
+ip dhcp excluded-address 10.1.80.129 10.1.80.131
+!
+ip dhcp pool Simulatedv4LAN
+ network 10.1.80.128 255.255.255.128
+ default-router 10.1.80.129 
+!
+ipv6 unicast-routing
+ipv6 cef
+!
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+
+!
+lldp run
+! 
+!        
+track 4 interface Serial0/1/1 line-protocol
+ delay down 30 up 30
+!
+track 5 list boolean or
+ object 4
+ object 31
+!
+track 31 ip sla 3
+ delay down 30 up 30
+!
+!
+ip telnet source-interface Loopback0
+ip ssh source-interface Loopback0
+ip ssh dh min size 2048
+!         
+!         
+interface Loopback0
+ description iBGP Peer
+ ip address 192.168.3.1 255.255.255.255
+ ip ospf network point-to-point
+ ipv6 address FE80::3 link-local
+ ipv6 address 2001:DB8:CAFE:203::1/128
+ ipv6 rip V120 enable
+ ospfv3 2 ipv6 area 0
+ ospfv3 2 ipv6 network point-to-point
+!
+interface Loopback1
+ description Branch Office Simulated LAN
+ ip address pool Simulatedv4LAN
+ ipv6 address FE80::3 link-local
+ ipv6 address 2001:DB8:CAFE:801::1/64
+!
+!
+interface GigabitEthernet0
+ vrf forwarding Mgmt-intf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shutdown
+!
+!
+interface GigabitEthernet0/0/0
+ description Collocated Office LAN
+ ip address 10.1.80.1 255.255.255.128
+ ip helper-address 10.1.2.13
+ !
+ !
+ ipv6 address FE80::3 link-local
+ ipv6 address 2001:DB8:CAFE:800::1/64
+ ipv6 nd prefix 2001:DB8:CAFE:800::/64 2592000 604800 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp relay destination  2001:DB8:CAFE:212::D2
+ ipv6 traffic-filter ALLOW-TCP-ICMP in
+ no shutdown
+!
+interface GigabitEthernet0/0/1
+ description FE to DLS1
+ ip address 10.1.2.14 255.255.255.252
+ ip flow ingress
+ !
+ !
+ ipv6 address FE80::1 link-local
+ ipv6 address 2001:DB8:CAFE:212::3/64
+ ipv6 rip V120 enable
+ ospfv3 2 ipv6 area 0
+ no shutdown
+!
+interface Serial0/1/1
+ description WAN link to R2: 2 Mbps leased line
+ no ip address
+ encapsulation frame-relay
+ no keepalive
+ no shutdown
+!
+interface Serial0/1/1.1 point-to-point
+ ip address 209.165.200.221 255.255.255.252
+ ipv6 address FE80::3 link-local
+ ipv6 address 2001:DB8:FEED:14::3/126
+ ipv6 rip V120 enable
+ frame-relay interface-dlci 203   
+!
+interface Serial0/1/1.2 point-to-point
+ ip address 10.1.90.3 255.255.255.254
+ ipv6 address FE80::3 link-local
+ ipv6 address 2001:DB8:CAFE:90::3/126
+ ipv6 rip V120 enable
+ frame-relay interface-dlci 302  
+!
+!
+router eigrp HQ
+ !
+ address-family ipv4 unicast autonomous-system 1
+  !
+  af-interface default
+   shutdown
+   passive-interface
+  exit-af-interface
+  !
+  af-interface Loopback1
+   no shutdown
+  exit-af-interface
+  !
+  af-interface GigabitEthernet0/0/0
+   no shutdown
+  exit-af-interface
+  !
+  af-interface Serial0/1/1.2
+   no shutdown
+   no passive-interface
+  exit-af-interface
+  !
+  topology base
+  exit-af-topology
+  network 10.1.80.0 0.0.0.255
+  network 10.1.90.2 0.0.0.1
+ exit-address-family
+ !
+ address-family ipv6 unicast autonomous-system 1
+  !
+  af-interface default
+   shutdown
+   passive-interface
+  exit-af-interface
+  !
+  af-interface Loopback1
+   no shutdown
+  exit-af-interface
+  !
+  af-interface GigabitEthernet0/0/0
+   no shutdown
+  exit-af-interface
+  !
+  af-interface Serial0/1/1.2
+   no shutdown
+   no passive-interface
+  exit-af-interface
+  !
+  af-interface Serial0/1/1.1
+   no shutdown
+  exit-af-interface
+  !
+  topology base
+  exit-af-topology
+ exit-address-family
+!
+!
+router ospfv3 2
+ !
+ address-family ipv6 unicast
+  passive-interface default
+  no passive-interface GigabitEthernet0/0/1
+  default-information originate metric 100 metric-type 1
+  redistribute connected route-map IPv6EIGRP&s0/0/1.1
+  redistribute eigrp 1 metric 100 metric-type 1
+  redistribute bgp 65501 route-map IPv6METRIC
+  router-id 33.0.0.33
+ exit-address-family
+!
+!
+router ospf 1
+ router-id 3.0.0.3
+ redistribute eigrp 1 metric 100 metric-type 1 subnets route-map EIGRP
+ redistribute bgp 65501 metric 100 metric-type 1 subnets
+ passive-interface default
+ no passive-interface GigabitEthernet0/0/1
+ network 10.1.2.12 0.0.0.3 area 0
+ network 192.168.3.1 0.0.0.0 area 0
+ default-information originate metric 100 metric-type 1
+!
+!
+router rip
+ version 2
+ passive-interface default
+ no passive-interface Serial0/1/1.2
+ network 10.0.0.0
+ network 192.168.3.0
+ network 209.165.200.0
+ distribute-list prefix RIP out
+ no auto-summary
+!
+!
+router bgp 65501
+ bgp router-id 3.0.0.3
+ bgp log-neighbor-changes
+ neighbor 192.168.1.1 remote-as 65501
+ neighbor 192.168.1.1 password 7 045802150C2E
+ neighbor 192.168.1.1 update-source Loopback0
+ neighbor 209.165.200.222 remote-as 65503
+ neighbor 209.165.200.222 password 7 110A1016141D
+ !
+ address-family ipv4
+  network 10.1.0.0 mask 255.255.0.0
+  network 192.168.3.1 mask 255.255.255.255
+  network 209.165.200.220 mask 255.255.255.252
+  neighbor 192.168.1.1 activate
+  neighbor 192.168.1.1 next-hop-self
+  neighbor 209.165.200.222 activate
+ exit-address-family
+ !
+ address-family ipv6
+  network 2001:DB8:CAFE::/48
+  network 2001:DB8:FEED:14::/126
+  network 2001:DB8:CAFE:203::1/128
+  neighbor 192.168.1.1 activate
+  neighbor 192.168.1.1 next-hop-self
+  neighbor 192.168.1.1 route-map IPv4TransportIPv6RouteFromR1 in
+  neighbor 209.165.200.222 activate
+  neighbor 209.165.200.222 route-map IPv4TransportIPv6RouteFromR2 in
+ exit-address-family
+!
+!
+crypto key gen rsa general-keys modulus 1024
+!
+!
+ip http server
+ip http secure-server
+ip flow-top-talkers
+ top 3
+ sort-by bytes
+ cache-timeout 600000
+!
+!
+ip route 10.1.0.0 255.255.0.0 Null0
+!
+!
+ip prefix-list 20 seq 10 permit 10.1.90.2/31
+ip prefix-list 20 seq 20 permit 10.1.80.0/25
+ip prefix-list 20 seq 30 permit 10.1.80.128/25
+ip prefix-list 20 seq 40 permit 20.20.20.20/32
+!
+!
+ip prefix-list RIP seq 10 permit 10.1.90.2/31
+ip prefix-list RIP seq 20 permit 192.168.3.1/32
+ip prefix-list RIP seq 30 permit 10.1.2.12/30
+ip prefix-list RIP seq 40 permit 10.1.30.0/24
+ip prefix-list RIP seq 50 permit 209.165.200.220/30
+!
+!
+ip sla 3
+ icmp-echo 209.165.200.225
+ frequency 10
+ip sla schedule 3 life forever start-time now
+!
+!
+logging source-interface Loopback0
+logging host 10.1.100.1
+!
+!
+ipv6 route 2001:DB8:CAFE::/48 Null0
+!
+!
+ipv6 router rip V120
+!
+!
+ipv6 prefix-list EIGRP seq 10 permit 2001:DB8:CAFE:90::/126
+ipv6 prefix-list EIGRP seq 20 permit 2001:DB8:CAFE:801::/64
+ipv6 prefix-list EIGRP seq 30 permit 2001:DB8:CAFE:800::/64
+!
+!
+route-map IPv6s0/0/1.1 permit 10
+ match interface Serial0/1/1.1
+!
+route-map EIGRP permit 10
+ match ip address prefix-list 20
+!
+route-map IPv4TransportIPv6RouteFromR1 permit 10
+ set ipv6 next-hop 2001:DB8:CAFE:201::1
+!
+route-map IPv4TransportIPv6RouteFromR2 permit 10
+ set ipv6 next-hop 2001:DB8:FEED:14::2
+!
+route-map IPv6METRIC permit 10
+ set metric 100
+ set metric-type type-1
+!
+route-map IPv6EIGRP&s0/0/1.1 permit 10
+ match ipv6 address prefix-list EIGRP
+ set metric 100
+ set metric-type type-1
+!
+route-map IPv6EIGRP&s0/0/1.1 permit 20
+ match interface Serial0/1/1.1
+ set metric 100
+ set metric-type type-1
+!
+!
+snmp-server community cisco RO
+snmp-server community san-fran RW
+snmp-server trap-source Loopback0
+snmp-server location TSHOOT Lab Facility
+snmp-server contact support@tshoot.net
+snmp-server enable traps eigrp
+snmp-server enable traps flash insertion
+snmp-server enable traps flash removal
+snmp-server enable traps config
+snmp-server enable traps cpu threshold
+snmp-server host 10.1.100.1 version 2c cisco 
+!
+!
+banner motd ^CCCCCC*** Lab 10-2 Router R3 TT-C Config ***^C
+!
+alias exec srb show run | begin router bgp
+alias exec sro show run | begin router ospf
+alias exec srr show run | b router rip
+alias exec sre show run | begin router eigrp
+alias exec srr6 show run | b ipv6 router rip
+alias exec sra show run | section event manager
+alias exec srig show run inter g0/0
+alias exec sira show ip route vrf VPN_A
+alias exec sirb show ip route vrf VPN_B
+alias exec sir show ip route
+alias exec six show ipv6 route
+alias exec sixa show ipv6 route vrf VPN_A
+alias exec sixb show ipv6 route vrf VPN_B
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ login authentication CONSOLE
+!
+line vty 0 15
+ exec-timeout 0 0
+ logging synchronous
+ transport input telnet ssh
+!
+!
+ntp source Loopback0
+ntp update-calendar
+ntp server 2.2.2.2
+!
+
+event manager applet DoNotUseIPv6Null
+ event track 5 state down
+ action 1.0 cli command "enable"
+ action 1.1 cli command "conf t"
+ action 1.2 cli command "no ipv6 route 2001:db8:cafe::/48 Null0"
+ action 1.3 syslog msg "Unnstall IPv6 Null!"
+event manager applet InstallIPv6Null
+ event track 5 state up
+ action 1.0 cli command "enable"
+ action 1.1 cli command "conf t"
+ action 1.2 cli command "ipv6 route 2001:db8:cafe::/48 Null0"
+ action 1.3 syslog msg "Install IPv6 Null!"
+!
+!
+archive
+ log config
+  logging enable
+  logging size 50
+  notify syslog contenttype plaintext
+  hidekeys
+ path tftp://10.1.100.1/$h-archive-config
+ write-memory
+file prompt quiet
+!
+end
+!

@@ -1,0 +1,510 @@
+version 16.6
+!LAB 8-2 Switch DLS1 TT-C Config
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname DLS1
+!
+!
+logging buffered 16384
+enable secret cisco
+!
+username cisco privilege 15 secret 9 $9$1EYvMqgeWzUxQE$uejsRN14FZ5qu.gNNAxQS55CElW02l1CiAHrNII.CoQ
+username instructor privilege 15 secret 9 $9$YBcNNZMrfGYSYH$XDw1U8i7vijz6Vtb5WV2ozXR8Sa93OYIjqiFlv7whZ2
+!
+
+aaa new-model
+!         
+!
+aaa authentication login default local
+aaa authentication login CONSOLE none
+aaa authorization exec default local 
+!
+!
+clock timezone PST -8
+clock summer-time PDT recurring
+do clock set 09:05:00 Oct 29 2014
+system mtu routing 1500
+vtp domain TSHOOT
+vtp mode transparent
+ip routing
+no ip domain-lookup
+ip domain-name tshoot.net
+!
+ip dhcp excluded-address 10.1.110.1 10.1.110.5
+ip dhcp excluded-address 10.1.120.1 10.1.120.5
+ip dhcp excluded-address 10.1.200.1 10.1.200.5
+ip dhcp excluded-address 10.1.120.129 10.1.120.254
+ip dhcp excluded-address 10.1.200.129 10.1.200.254
+ip dhcp excluded-address 10.1.110.129 10.1.110.254
+!
+ip dhcp pool VOICE
+ network 10.1.200.0 255.255.255.0
+ default-router 10.1.200.254 
+!
+ip dhcp pool GUEST
+ network 10.1.110.0 255.255.255.0
+ default-router 10.1.110.254 
+!
+ip dhcp pool OFFICE
+ network 10.1.120.0 255.255.255.0
+ default-router 10.1.120.254 
+!
+!
+ipv6 unicast-routing
+ipv6 dhcp pool DHCPv6OFFICE
+ address prefix 2001:DB8:CAFE:120:ABCD::/80
+ domain-name tshoot.net
+!
+ipv6 dhcp pool DHCPv6VOICE
+ address prefix 2001:DB8:CAFE:200:ABCD::/80
+ domain-name tshoot.net
+!
+ipv6 dhcp pool DHCPv6GUEST
+ address prefix 2001:DB8:CAFE:110:ABCD::/80
+ domain-name tshoot.net
+!
+!
+errdisable recovery cause bpduguard
+!
+spanning-tree mode rapid-pvst
+spanning-tree vlan 99,110,120 priority 24576
+spanning-tree vlan 100,200,300 priority 28672
+!
+vlan 99
+ name MANAGEMENT
+!
+vlan 100
+ name SERVERS
+!
+vlan 110
+ name GUEST
+!
+vlan 120  
+ name OFFICE
+!
+vlan 130
+ name HOSTED_SERVICES
+!
+vlan 200
+ name VOICE
+!
+vlan 300
+ name E-PEER
+!
+vlan 666
+ name NATIVE
+!
+vlan 999
+ name PARKING_LOT
+!
+ip telnet source-interface Vlan99
+ip ssh source-interface Vlan99
+ip ssh dh min size 2048
+!
+interface Port-channel1
+ description Channel to ALS1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,110,120,130,200
+ switchport mode trunk
+ switchport nonegotiate
+ no shutdown
+!
+interface Port-channel10
+ description Channel to DLS2
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,130,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ no shutdown
+!
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ ip address 10.136.abracadabra 255.255.255.0
+ no shutdown
+ !0
+ negotiation auto
+!
+interface GigabitEthernet1/0/1
+ description Channel to ALS1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,110,120,130,200
+ switchport mode trunk
+ switchport nonegotiate
+ channel-group 1 mode on
+ no shutdown
+!
+interface GigabitEthernet1/0/2
+ description Channel to ALS1
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,110,120,130,200
+ switchport mode trunk
+ switchport nonegotiate
+ channel-group 1 mode on
+ no shutdown
+!
+interface GigabitEthernet1/0/3
+ description Channel to DLS2
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,130,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ channel-group 10 mode on
+ no shutdown
+!
+interface GigabitEthernet1/0/4
+ description Channel to DLS2
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 99,100,110,120,130,200,300
+ switchport mode trunk
+ switchport nonegotiate
+ channel-group 10 mode on
+ no shutdown
+!
+interface GigabitEthernet1/0/5
+ description FE to R1
+ no switchport
+ ip address 10.1.2.1 255.255.255.252
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:20::D1/64
+ !
+ !
+ spanning-tree bpduguard enable
+ no shutdown
+!
+interface GigabitEthernet1/0/6
+ description FE to SRV1
+ switchport access vlan 100
+ switchport mode access
+ switchport nonegotiate
+ spanning-tree portfast
+ no shutdown
+!
+interface GigabitEthernet1/0/7
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/8
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/9
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/10
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/11
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/12
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!         
+interface GigabitEthernet1/0/13
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/14
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/15
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/16
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/17
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/18
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/19
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/20
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/21
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/22
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown 
+!
+interface GigabitEthernet1/0/23
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/0/24
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/1/1
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/1/2
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/1/3
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface GigabitEthernet1/1/4
+ description PARKING_LOT
+ switchport access vlan 999
+ switchport mode access
+ switchport nonegotiate
+ shutdown
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+interface Vlan99
+ ip address 10.1.99.252 255.255.255.0
+ no ip proxy-arp
+ standby 99 ip 10.1.99.254
+ standby 99 priority 110
+ standby 99 preempt
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:99::D1/64
+ ipv6 ospf 1 area 1
+ no shutdown
+!
+interface Vlan100
+ ip address 10.1.100.252 255.255.255.0
+ no ip proxy-arp
+ standby 100 ip 10.1.100.254
+ standby 100 preempt
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:100::D1/64
+ no shutdown
+!
+interface Vlan110
+ ip address 10.1.110.252 255.255.255.0
+ no ip proxy-arp
+ standby 110 ip 10.1.110.254
+ standby 110 priority 110
+ standby 110 preempt
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:110::D1/64
+ ipv6 nd prefix 2001:DB8:CAFE:110::/64 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server DHCPv6GUEST
+ no shutdown
+!
+interface Vlan120
+ ip address 10.1.120.252 255.255.255.0
+ no ip proxy-arp
+ standby 120 ip 10.1.120.254
+ standby 120 priority 110
+ standby 120 preempt
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:120::D1/64
+ ipv6 nd prefix 2001:DB8:CAFE:120::/64 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server DHCPv6OFFICE
+ no shutdown
+!
+interface Vlan 130
+ ip address 172.30.1.1 255.255.255.224
+ no ip proxy-arp
+ no shut
+!
+interface Vlan200
+ ip address 10.1.200.252 255.255.255.0
+ no ip proxy-arp
+ standby 200 ip 10.1.200.254
+ standby 200 preempt
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:200::D1/64
+ ipv6 nd prefix 2001:DB8:CAFE:200::/64 no-autoconfig
+ ipv6 nd managed-config-flag
+ ipv6 dhcp server DHCPv6VOICE
+ no shutdown
+!
+interface Vlan300
+ ip address 10.1.30.252 255.255.255.0
+ no ip proxy-arp
+ ipv6 address FE80::D1 link-local
+ ipv6 address 2001:DB8:CAFE:300::D1/64
+ no shutdown
+!
+router eigrp HQ
+ !
+ address-family ipv4 unicast autonomous-system 1
+  !
+  af-interface default
+   passive-interface
+  exit-af-interface
+  !
+  af-interface f0/5
+   no passive-interface
+  exit-af-interface
+  !
+  af-interface vlan300
+   no passive-interface
+  exit-af-interface
+  !
+  topology base
+  exit-af-topology
+  network 10.1.0.0 0.0.255.255
+ exit-address-family
+ !
+ address-family ipv6 unicast autonomous-system 1
+  !
+  af-interface default
+   passive-interface
+  exit-af-interface
+  !
+  af-interface f0/5
+   no passive-interface
+  exit-af-interface
+  !
+  af-interface vlan300
+   no passive-interface
+  exit-af-interface
+  !
+  topology base
+  exit-af-topology
+ exit-address-family
+!
+no ip http server
+no ip http secure-server
+!
+!
+logging source-interface Vlan99
+logging host 10.1.100.1
+!
+snmp-server community cisco RO
+snmp-server community san-fran RW
+snmp-server trap-source Vlan99
+snmp-server location TSHOOT Lab Facility
+snmp-server contact support@tshoot.net
+snmp-server enable traps eigrp
+snmp-server enable traps vtp
+snmp-server enable traps vlancreate
+snmp-server enable traps vlandelete
+snmp-server enable traps port-security
+snmp-server enable traps config
+snmp-server enable traps hsrp
+snmp-server enable traps vlan-membership
+snmp-server enable traps errdisable
+snmp-server host 10.1.100.1 version 2c cisco 
+!
+!
+banner motd ^*** Lab 8-2 Switch DLS1 TT-C Config ***^
+!
+line con 0
+ exec-timeout 0 0
+ logging synchronous
+ login authentication CONSOLE
+line vty 0 4
+ exec-timeout 0 0
+ logging synchronous
+ transport input telnet ssh
+!
+ntp source Vlan99
+ntp server 192.168.2.1
+!
+crypto key gen rsa general-keys modulus 1024
+!
+archive
+ log config
+  logging enable
+  logging size 50
+  notify syslog contenttype plaintext
+  hidekeys
+ path tftp://10.1.100.1/$h-archive-config
+ write-memory
+file prompt quiet
+!
+end
+!
