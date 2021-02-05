@@ -56,7 +56,10 @@ network 10.0.2.0 0.0.0.255 area 0
 network 10.0.3.0 0.0.0.255 area 0
 network 10.1.1.0 0.0.0.255 area 1
 alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec reset.hard tclsh flash:/ccnp/scripts/reset.tbc
+alias exec reset.soft config replace flash:/ccnp/base/base.cfg
 alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
+alias exec enarsi.soft tclsh flash:ccnp/scripts/enarsi-soft.tcl
 end
 clear ip ospf process
 yes

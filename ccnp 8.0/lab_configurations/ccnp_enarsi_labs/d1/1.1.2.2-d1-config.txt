@@ -37,6 +37,9 @@ line con 0
  logging synchronous
  exit
 alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec reset.hard tclsh flash:/ccnp/scripts/reset.tbc
+alias exec reset.soft config replace flash:/ccnp/base/base.cfg
 alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
+alias exec enarsi.soft tclsh flash:ccnp/scripts/enarsi-soft.tcl
 end
 

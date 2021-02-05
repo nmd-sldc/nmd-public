@@ -41,6 +41,9 @@ interface range g1/0/1-4, g1/0/7-10, g1/0/12-22, g1/0/24
  shutdown
  exit
 alias exec reset.now tclsh flash:ccnp/enarsi/reset.tbc
+alias exec reset.hard tclsh flash:/ccnp/scripts/reset.tbc
+alias exec reset.soft config replace flash:/ccnp/base/base.cfg
 alias exec enarsi.lab tclsh flash:ccnp/scripts/enarsi-lab.tcl
+alias exec enarsi.soft tclsh flash:ccnp/scripts/enarsi-soft.tcl
 end
 
